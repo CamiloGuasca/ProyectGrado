@@ -20,9 +20,10 @@ import com.google.firebase.FirebaseApp
 class MainActivity : ComponentActivity() {
 
     private val usuarioViewModel: UsuarioViewModel by viewModels()
-
+    private lateinit var firebaseAnalytics: FirebaseAnalytics
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        firebaseAnalytics = Firebase.analytics
 
         FirebaseApp.initializeApp(this)
         setContent {
