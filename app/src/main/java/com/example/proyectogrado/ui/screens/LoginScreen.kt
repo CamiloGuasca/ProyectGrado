@@ -1,132 +1,118 @@
 package com.example.proyectogrado.ui.screens
 
-import androidx.compose.foundation.Image
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.proyectogrado.viewmodel.UsuarioViewModel
+import java.util.Locale
 
-
-// --- Definición de Colores (Ajusta según tus necesidades) ---
-val DarkBackgroundPattern = Color(0xFF0A192F) // Un azul oscuro como ejemplo
+val DarkBackgroundPattern = Color(0xFF0A192F)
 val LightGrayBackground = Color(0xFFE0E0E0)
 val ButtonDarkColor = Color(0xFF1A1A1A)
 val TextGray = Color.Gray
 
 @Composable
-fun LoginScreen(onRegisterClick: () -> Unit) {
-    // --- State Variables ---
-    // Usamos rememberSaveable para que el texto sobreviva a cambios de configuración (como rotación)
+fun LoginScreen(
+    onRegisterClick: () -> Unit,
+    onLoginSuccess: (String) -> Unit,
+    viewModel: UsuarioViewModel = viewModel()
+) {
+    val context = LocalContext.current
     var username by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
 
-    // --- Main Layout ---
     Column(
         modifier = Modifier
-            .fillMaxSize() // Ocupa toda la pantalla
-            .background(Color.White) // Fondo principal blanco
+            .fillMaxSize()
+            .background(Color.White)
     ) {
-        // --- Top Section (Dark Background & Logo) ---
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f) // Ocupa una porción del espacio vertical
-                .background(DarkBackgroundPattern), // Color de fondo oscuro
-            contentAlignment = Alignment.Center // Centra el contenido (logo)
+                .weight(1f)
+                .background(DarkBackgroundPattern),
+            contentAlignment = Alignment.Center
         ) {
-            // Aquí podrías poner una Image con el patrón si lo tienes
-            // Image(painter = painterResource(id = R.drawable.your_pattern), contentDescription = null, contentScale = ContentScale.Crop)
-
-            // --- Logo ---
             Card(
-                shape = RoundedCornerShape(16.dp), // Bordes redondeados para el contenedor del logo
+                shape = RoundedCornerShape(16.dp),
                 modifier = Modifier
-                    .size(100.dp) // Tamaño del contenedor del logo
-                    .offset(y = 50.dp), // Desplaza el logo hacia abajo para que se superponga
-                colors = CardDefaults.cardColors(containerColor = Color.White) // Fondo blanco para el logo
+                    .size(100.dp)
+                    .offset(y = 50.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    // Reemplaza 'R.drawable.your_logo' con el ID de tu recurso de logo
                     Icon(
-                        painter = painterResource(id = android.R.drawable.ic_menu_share), // Icono de ejemplo
-                        contentDescription = "Logo de la App",
+                        imageVector = Icons.Default.Person,
+                        contentDescription = "Logo",
                         modifier = Modifier.size(60.dp),
-                        tint = DarkBackgroundPattern // Color del icono
+                        tint = DarkBackgroundPattern
                     )
                 }
             }
         }
 
-        // --- Bottom Section (Form) ---
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(2f) // Ocupa más espacio vertical que la sección superior
-                .padding(top = 70.dp, start = 32.dp, end = 32.dp, bottom = 32.dp), // Padding (más arriba por el logo)
+                .weight(2f)
+                .padding(top = 70.dp, start = 32.dp, end = 32.dp, bottom = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Text("Inicio de Sesión", fontSize = 28.sp, fontWeight = FontWeight.Bold)
 
-            // --- Title ---
-            Text(
-                text = "Inicio de Sesión",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.Black
-            )
+            Spacer(modifier = Modifier.height(32.dp))
 
-            Spacer(modifier = Modifier.height(32.dp)) // Espacio vertical
-
-            // --- Username Field ---
             OutlinedTextField(
                 value = username,
                 onValueChange = { username = it },
-                label = { Text("USUARIO", style = TextStyle(fontWeight = FontWeight.Normal)) },
+                label = { Text("USUARIO") },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp), // Bordes redondeados
+                shape = RoundedCornerShape(12.dp),
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = LightGrayBackground, // Color de fondo cuando está enfocado
-                    unfocusedContainerColor = LightGrayBackground, // Color de fondo cuando no está enfocado
+                    focusedContainerColor = LightGrayBackground,
+                    unfocusedContainerColor = LightGrayBackground,
                     disabledContainerColor = LightGrayBackground,
-                    focusedBorderColor = Color.Transparent, // Sin borde al enfocar
-                    unfocusedBorderColor = Color.Transparent // Sin borde normal
+                    focusedBorderColor = Color.Transparent,
+                    unfocusedBorderColor = Color.Transparent
                 )
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // --- Password Field ---
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
-                label = { Text("CONTRASEÑA", style = TextStyle(fontWeight = FontWeight.Normal)) },
+                label = { Text("CONTRASEÑA") },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp), // Bordes redondeados
+                shape = RoundedCornerShape(12.dp),
                 singleLine = true,
-                visualTransformation = PasswordVisualTransformation(), // Oculta la contraseña
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password), // Teclado de contraseña
+                visualTransformation = PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = LightGrayBackground,
                     unfocusedContainerColor = LightGrayBackground,
@@ -138,19 +124,28 @@ fun LoginScreen(onRegisterClick: () -> Unit) {
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // --- Login Button ---
             Button(
                 onClick = {
-                    // TODO: Lógica de inicio de sesión aquí
-                    println("Username: $username, Password: $password")
+                    if (username.isNotBlank() && password.isNotBlank()) {
+                        viewModel.login(username, password) { usuario ->
+                            if (usuario != null) {
+                                Toast.makeText(context, "Bienvenido, ${usuario.nombre}", Toast.LENGTH_SHORT).show()
+                                onLoginSuccess(usuario.rol.lowercase(Locale.ROOT)) // ✅ Aquí usamos lowercase seguro
+                            } else {
+                                Toast.makeText(context, "Credenciales incorrectas", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    } else {
+                        Toast.makeText(context, "Por favor, llena todos los campos", Toast.LENGTH_SHORT).show()
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
-                shape = RoundedCornerShape(12.dp), // Bordes redondeados
+                shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = ButtonDarkColor, // Color de fondo del botón
-                    contentColor = Color.White // Color del texto del botón
+                    containerColor = ButtonDarkColor,
+                    contentColor = Color.White
                 )
             ) {
                 Text("Iniciar Sesión", fontSize = 16.sp)
@@ -158,38 +153,23 @@ fun LoginScreen(onRegisterClick: () -> Unit) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // --- Footer Links ---
             ClickableText(
                 text = AnnotatedString("¿Olvidó su contraseña?"),
-                onClick = { offset ->
-                    // TODO: Lógica para recuperar contraseña
-                    println("Clic en Olvidó contraseña")
-                },
-                style = TextStyle(
-                    color = TextGray,
-                    textAlign = TextAlign.Center
-                )
+                onClick = { /* TODO */ },
+                style = TextStyle(color = TextGray, textAlign = TextAlign.Center)
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
             ClickableText(
                 text = AnnotatedString("Regístrese!"),
-                onClick = {onRegisterClick()},
+                onClick = { onRegisterClick() },
                 style = TextStyle(
                     color = TextGray,
-                    fontWeight = FontWeight.Bold, // Un poco más destacado
+                    fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center
                 )
             )
-        } // Fin Column (Bottom Section)
-    } // Fin Column (Main Layout)
+        }
+    }
 }
-
-// --- Preview ---/**
-/**
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    LoginScreen()
-}**/
