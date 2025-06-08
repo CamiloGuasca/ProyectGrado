@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.proyectogrado.domain.model.Usuario
-import com.example.proyectogrado.ui.viewmodel.UsuarioViewModel
+import com.example.proyectogrado.viewmodel.UsuarioViewModel
 import java.util.Calendar
 
 //val DarkBackgroundPattern = Color(0xFF0A192F)
@@ -148,13 +148,9 @@ fun RegisterScreenStyled(onBack: () -> Unit, viewModel: UsuarioViewModel = viewM
 
             Button(
                 onClick = {
-                    if (
-                        documento.isNotBlank() &&
-                        nombre.isNotBlank() &&
-                        correo.isNotBlank() &&
-                        fechaNacimiento.isNotBlank() &&
-                        usuario.isNotBlank() &&
-                        contraseña.isNotBlank() &&
+                    if (documento.isNotBlank() && nombre.isNotBlank() &&
+                        correo.isNotBlank() && fechaNacimiento.isNotBlank() &&
+                        usuario.isNotBlank() && contraseña.length >= 6 &&
                         rol != "Seleccione un rol"
                     ) {
                         val nuevoUsuario = Usuario(
@@ -166,9 +162,14 @@ fun RegisterScreenStyled(onBack: () -> Unit, viewModel: UsuarioViewModel = viewM
                             password = contraseña,
                             rol = rol
                         )
-                        viewModel.registrarUsuario(nuevoUsuario)
-                        Toast.makeText(context, "Usuario registrado", Toast.LENGTH_SHORT).show()
-                        onBack()
+                        viewModel.registrarUsuario(nuevoUsuario) { success ->
+                            if (success) {
+                                Toast.makeText(context, "Usuario registrado", Toast.LENGTH_SHORT).show()
+                                onBack()
+                            } else {
+                                Toast.makeText(context, "Error al registrar", Toast.LENGTH_SHORT).show()
+                            }
+                        }
                     } else {
                         Toast.makeText(context, "Completa todos los campos", Toast.LENGTH_SHORT).show()
                     }

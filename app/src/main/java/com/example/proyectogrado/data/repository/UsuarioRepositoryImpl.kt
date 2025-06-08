@@ -1,38 +1,47 @@
 package com.example.proyectogrado.data.repository
 
-import com.example.proyectogrado.data.local.UsuarioDao
-import com.example.proyectogrado.data.local.UsuarioEntity
 import com.example.proyectogrado.domain.model.Usuario
 import com.example.proyectogrado.domain.repository.UsuarioRepository
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.tasks.await
 
-class UsuarioRepositoryImpl(private val dao: UsuarioDao) : UsuarioRepository {
-    override suspend fun registrarUsuario(usuario: Usuario) {
-        val entity = UsuarioEntity(
-            documento = usuario.documento,
-            nombre = usuario.nombre,
-            correo = usuario.correo,
-            fechaNacimiento = usuario.fechaNacimiento,
-            usuario = usuario.usuario,
-            password = usuario.password,
-            rol = usuario.rol
-        )
-        dao.insertar(entity)
+class UsuarioRepositoryImpl : UsuarioRepository {
+
+    private val auth = FirebaseAuth.getInstance()
+    private val firestore = FirebaseFirestore.getInstance()
+
+    override suspend fun registrarUsuario(usuario: Usuario): Boolean {
+        return try {
+            // 1. Crear cuenta con correo y contraseña
+            val result = auth.createUserWithEmailAndPassword(usuario.correo, usuario.password).await()
+
+            // 2. Guardar datos adicionales en Firestore
+            result.user?.let { user ->
+                firestore.collection("usuarios")
+                    .document(user.uid) // usamos el UID de Firebase como ID
+                    .set(usuario.copy(password = "")) // guardamos sin contraseña por seguridad
+                    .await()
+            }
+            true
+        } catch (e: Exception) {
+            println("🔥 Error al registrar usuario: ${e.message}")
+            e.printStackTrace()
+            false
+        }
     }
 
-    override suspend fun login(usuario: String, password: String): Usuario? {
-        val entity = dao.login(usuario, password)
-        return entity?.let {
-            Usuario(
-                documento = it.documento,
-                nombre = it.nombre,
-                correo = it.correo,
-                fechaNacimiento = it.fechaNacimiento,
-                usuario = it.usuario,
-                password = it.password,
-                rol = it.rol
-            )
+    override suspend fun login(correo: String, password: String): Usuario? {
+        return try {
+            val result = auth.signInWithEmailAndPassword(correo, password).await()
+            val uid = result.user?.uid
+            uid?.let {
+                val doc = firestore.collection("usuarios").document(uid).get().await()
+                doc.toObject(Usuario::class.java)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
         }
     }
 }
-
-

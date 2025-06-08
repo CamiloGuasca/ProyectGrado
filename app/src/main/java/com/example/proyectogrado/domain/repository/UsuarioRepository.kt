@@ -5,6 +5,6 @@ import com.example.proyectogrado.data.local.UsuarioEntity
 import com.example.proyectogrado.domain.model.Usuario
 
 interface UsuarioRepository {
-    suspend fun registrarUsuario(usuario: Usuario)
-    suspend fun login(usuario: String, password: String): Usuario?
+    suspend fun registrarUsuario(usuario: Usuario): Boolean
+    suspend fun login(correo: String, password: String): Usuario?
 }

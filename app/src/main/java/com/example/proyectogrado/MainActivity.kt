@@ -14,8 +14,10 @@ import com.example.proyectogrado.ui.screens.Prueba
 import com.example.proyectogrado.ui.screens.RegisterScreenStyled
 import com.example.proyectogrado.ui.theme.ProyectoGradoTheme
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.proyectogrado.ui.viewmodel.UsuarioViewModel
+import com.example.proyectogrado.viewmodel.UsuarioViewModel
 import com.google.firebase.FirebaseApp
+import com.google.firebase.firestore.ktx.firestore
+
 
 class MainActivity : ComponentActivity() {
 
@@ -23,9 +25,19 @@ class MainActivity : ComponentActivity() {
     private lateinit var firebaseAnalytics: FirebaseAnalytics
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        firebaseAnalytics = Firebase.analytics
-
         FirebaseApp.initializeApp(this)
+        firebaseAnalytics = Firebase.analytics
+        val db = Firebase.firestore
+        val data = hashMapOf("mensaje" to "funciona!")
+        db.collection("test").add(data)
+            .addOnSuccessListener {
+                println("✅ ¡Se agregó el documento correctamente!")
+            }
+            .addOnFailureListener {
+                println("❌ Error al agregar documento: ${it.message}")
+            }
+
+
         setContent {
             var isRegisterScreenVisible by remember { mutableStateOf(false) }
 
