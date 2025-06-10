@@ -3,6 +3,7 @@ package com.example.proyectogrado.data.repository
 import com.example.proyectogrado.domain.model.Usuario
 import com.example.proyectogrado.domain.repository.UsuarioRepository
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 
@@ -13,23 +14,21 @@ class UsuarioRepositoryImpl : UsuarioRepository {
 
     override suspend fun registrarUsuario(usuario: Usuario): Boolean {
         return try {
-            // 1. Crear cuenta con correo y contraseña
-            val result = auth.createUserWithEmailAndPassword(usuario.correo, usuario.password).await()
-
-            // 2. Guardar datos adicionales en Firestore
-            result.user?.let { user ->
-                firestore.collection("usuarios")
-                    .document(user.uid) // usamos el UID de Firebase como ID
-                    .set(usuario.copy(password = "")) // guardamos sin contraseña por seguridad
-                    .await()
-            }
+            auth.createUserWithEmailAndPassword(usuario.correo, usuario.password).await()
+            firestore.collection("usuarios")
+                .document(auth.currentUser!!.uid)
+                .set(usuario.copy(password = ""))
+                .await()
             true
+        } catch (e: FirebaseAuthUserCollisionException) {
+            println("⚠️ Correo ya registrado: ${e.message}")
+            false
         } catch (e: Exception) {
-            println("🔥 Error al registrar usuario: ${e.message}")
-            e.printStackTrace()
+            println("❌ Error al registrar usuario: ${e.message}")
             false
         }
     }
+
 
     override suspend fun login(correo: String, password: String): Usuario? {
         return try {

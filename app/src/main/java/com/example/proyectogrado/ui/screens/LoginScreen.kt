@@ -26,11 +26,11 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.proyectogrado.viewmodel.UsuarioViewModel
 import java.util.Locale
-
-val DarkBackgroundPattern = Color(0xFF0A192F)
-val LightGrayBackground = Color(0xFFE0E0E0)
-val ButtonDarkColor = Color(0xFF1A1A1A)
-val TextGray = Color.Gray
+import com.example.proyectogrado.ui.theme.DarkBackgroundPattern
+import com.example.proyectogrado.ui.theme.LightGrayBackground
+import com.example.proyectogrado.ui.theme.ButtonDarkColor
+import com.example.proyectogrado.ui.theme.TextGray
+import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun LoginScreen(
@@ -93,6 +93,7 @@ fun LoginScreen(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = LightGrayBackground,
                     unfocusedContainerColor = LightGrayBackground,
@@ -130,13 +131,13 @@ fun LoginScreen(
                         viewModel.login(username, password) { usuario ->
                             if (usuario != null) {
                                 Toast.makeText(context, "Bienvenido, ${usuario.nombre}", Toast.LENGTH_SHORT).show()
-                                onLoginSuccess(usuario.rol.lowercase(Locale.ROOT)) // ✅ Aquí usamos lowercase seguro
+                                onLoginSuccess(usuario.rol.lowercase(Locale.ROOT))
                             } else {
                                 Toast.makeText(context, "Credenciales incorrectas", Toast.LENGTH_SHORT).show()
                             }
                         }
                     } else {
-                        Toast.makeText(context, "Por favor, llena todos los campos", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Por favor, completa todos los campos", Toast.LENGTH_SHORT).show()
                     }
                 },
                 modifier = Modifier
@@ -153,11 +154,22 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            ClickableText(
-                text = AnnotatedString("¿Olvidó su contraseña?"),
-                onClick = { /* TODO */ },
-                style = TextStyle(color = TextGray, textAlign = TextAlign.Center)
-            )
+            TextButton(onClick = {
+                if (username.isNotBlank()) {
+                    FirebaseAuth.getInstance()
+                        .sendPasswordResetEmail(username)
+                        .addOnSuccessListener {
+                            Toast.makeText(context, "📧 Revisa tu correo para restablecer la contraseña", Toast.LENGTH_LONG).show()
+                        }
+                        .addOnFailureListener {
+                            Toast.makeText(context, "❌ Error: ${it.message}", Toast.LENGTH_LONG).show()
+                        }
+                } else {
+                    Toast.makeText(context, "⚠️ Ingresa tu correo electrónico primero", Toast.LENGTH_SHORT).show()
+                }
+            }) {
+                Text("¿Olvidó su contraseña?", color = TextGray, fontWeight = FontWeight.Medium)
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
 

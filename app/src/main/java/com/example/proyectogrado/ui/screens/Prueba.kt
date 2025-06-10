@@ -23,6 +23,10 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.util.Calendar
+import com.example.proyectogrado.ui.theme.DarkBackgroundPattern
+import com.example.proyectogrado.ui.theme.LightGrayBackground
+import com.example.proyectogrado.ui.theme.ButtonDarkColor
+import com.example.proyectogrado.ui.theme.TextGray
 
 // Colores personalizados
 val ll = Color(0xFF0A192F)
