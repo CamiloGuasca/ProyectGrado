@@ -32,12 +32,15 @@ class MainActivity : ComponentActivity() {
         firebaseAnalytics = Firebase.analytics
 
         setContent {
-            var currentScreen by remember { mutableStateOf("login") }
+            var currentScreen by remember { mutableStateOf("inicio") }
 
             ProyectoGradoTheme {
                 when (currentScreen) {
+                    "inicio" -> PantallaInicioModo(
+                        onSeleccionarPadre = { currentScreen = "login" },
+                        onSeleccionarEstudiante = { currentScreen = "configEstudiante" }
+                    )
 
-                    // Inicio de sesión
                     "login" -> LoginScreen(
                         onRegisterClick = { currentScreen = "register" },
                         onLoginSuccess = { rol ->
@@ -51,16 +54,13 @@ class MainActivity : ComponentActivity() {
                         viewModel = usuarioViewModel
                     )
 
-                    // Registro
                     "register" -> RegisterScreenStyled(
                         onBack = { currentScreen = "login" },
                         viewModel = usuarioViewModel
                     )
 
-                    // Docente
                     "profe" -> ListaUsuariosScreen()
 
-                    // Menú del padre
                     "padreMenu" -> Column(modifier = Modifier.padding(16.dp)) {
                         Text("Bienvenido padre de familia", style = MaterialTheme.typography.titleLarge)
                         Spacer(modifier = Modifier.height(16.dp))
@@ -80,24 +80,20 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
-                    // Pantalla para vincular estudiante (padre/docente)
                     "vincular" -> VincularEstudianteScreen(
                         onBack = { currentScreen = "padreMenu" },
                         viewModel = vinculacionViewModel
                     )
 
-                    // Pantalla de monitoreo del padre
                     "uso" -> PantallaMonitoreoUso(onLogout = {
                         FirebaseAuth.getInstance().signOut()
                         currentScreen = "login"
                     })
 
-                    // Configurar ID del estudiante
                     "configEstudiante" -> ConfigurarEstudianteScreen(
                         onConfigurado = { currentScreen = "enviar" }
                     )
 
-                    // Enviar monitoreo desde celular del niño
                     "enviar" -> PantallaEnviarUso(onFinish = {
                         FirebaseAuth.getInstance().signOut()
                         currentScreen = "login"

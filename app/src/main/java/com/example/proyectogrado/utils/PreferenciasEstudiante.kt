@@ -3,27 +3,28 @@ package com.example.proyectogrado.utils
 import android.content.Context
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
+
+// ✅ DataStore de preferencias como extensión del Context
+val Context.dataStore by preferencesDataStore(name = "configuracion_estudiante")
 
 object PreferenciasEstudiante {
 
-    private val KEY_ID_ESTUDIANTE = stringPreferencesKey("id_estudiante")
+    private val ID_KEY = stringPreferencesKey("id_estudiante")
 
-    fun guardarIdEstudiante(context: Context, id: String) {
+    fun guardarId(context: Context, id: String) {
         runBlocking {
             context.dataStore.edit { prefs ->
-                prefs[KEY_ID_ESTUDIANTE] = id
+                prefs[ID_KEY] = id
             }
         }
     }
 
-    fun obtenerIdEstudiante(context: Context): String {
+    fun obtenerId(context: Context): String {
         return runBlocking {
-            context.dataStore.data
-                .map { prefs -> prefs[KEY_ID_ESTUDIANTE] ?: "" }
-                .first()
+            context.dataStore.data.first()[ID_KEY] ?: ""
         }
     }
 }

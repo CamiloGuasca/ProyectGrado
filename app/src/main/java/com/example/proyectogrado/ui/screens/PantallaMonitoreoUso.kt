@@ -1,7 +1,7 @@
 package com.example.proyectogrado.ui.screens
 
 import android.app.DatePickerDialog
-import android.widget.Toast
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -16,42 +16,83 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.proyectogrado.domain.model.AppUso
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import java.text.SimpleDateFormat
 import java.util.*
-import com.example.proyectogrado.domain.model.AppUso
-import com.example.proyectogrado.viewmodel.MonitoreoViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
 fun PantallaMonitoreoUso(
-    onLogout: () -> Unit,
-    viewModel: MonitoreoViewModel = viewModel()
+    onLogout: () -> Unit
 ) {
     val context = LocalContext.current
     val calendar = remember { Calendar.getInstance() }
     val dateFormat = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
 
     var fechaSeleccionada by remember { mutableStateOf(dateFormat.format(calendar.time)) }
+    var listaApps by remember { mutableStateOf<List<AppUso>>(emptyList()) }
+    var estudianteId by remember { mutableStateOf<String?>(null) }
+    var mensajeError by remember { mutableStateOf<String?>(null) }
 
-    var nombreApp by remember { mutableStateOf("") }
-    var tiempoApp by remember { mutableStateOf("") }
-
-    // Cargar datos desde Firebase cuando cambia la fecha
-    LaunchedEffect(fechaSeleccionada) {
-        viewModel.cargarDatos(fechaSeleccionada)
+    fun mapearNombre(nombrePaquete: String): String {
+        return when (nombrePaquete) {
+            "com.google.android.youtube" -> "YouTube"
+            "com.whatsapp" -> "WhatsApp"
+            "com.instagram.android" -> "Instagram"
+            "com.google.android.gm" -> "Gmail"
+            "com.android.chrome" -> "Chrome"
+            "com.tiktok.android" -> "TikTok"
+            else -> nombrePaquete
+        }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
+    // 🔍 Obtener estudiante vinculado al padre
+    LaunchedEffect(Unit) {
+        val padreUid = FirebaseAuth.getInstance().currentUser?.uid
+        Log.d("DEBUG", "🔑 Padre actual: $padreUid")
+        if (padreUid != null) {
+            FirebaseFirestore.getInstance()
+                .collection("estudiantes")
+                .whereEqualTo("vinculadoPor", padreUid)
+                .get()
+                .addOnSuccessListener { docs ->
+                    if (!docs.isEmpty) {
+                        estudianteId = docs.documents.first().getString("id")
+                        Log.d("DEBUG", "👦 Estudiante vinculado: $estudianteId")
+                    } else {
+                        mensajeError = "❌ No hay estudiante vinculado."
+                    }
+                }
+                .addOnFailureListener {
+                    mensajeError = "❌ Error al obtener estudiante vinculado."
+                }
+        }
+    }
+
+    // 🔁 Cargar apps cada vez que cambie fecha o estudiante
+    LaunchedEffect(fechaSeleccionada, estudianteId) {
+        if (!estudianteId.isNullOrBlank()) {
+            FirebaseFirestore.getInstance()
+                .collection("usoApps")
+                .document(estudianteId!!)
+                .collection(fechaSeleccionada)
+                .get()
+                .addOnSuccessListener { result ->
+                    val lista = result.mapNotNull { it.toObject(AppUso::class.java) }
+                    listaApps = lista
+                    Log.d("DEBUG", "📦 Apps cargadas: ${lista.size}")
+                }
+                .addOnFailureListener {
+                    mensajeError = "❌ Error al cargar uso de apps"
+                }
+        }
+    }
+
+    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Text("Monitoreo de Uso de Aplicaciones", style = MaterialTheme.typography.headlineSmall)
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Botón de filtro por fecha
         Button(onClick = {
             DatePickerDialog(
                 context,
@@ -70,65 +111,20 @@ fun PantallaMonitoreoUso(
         }
 
         Spacer(modifier = Modifier.height(8.dp))
-
         Text("Fecha seleccionada: $fechaSeleccionada", fontSize = 14.sp)
-
         Spacer(modifier = Modifier.height(16.dp))
 
-        // FORMULARIO: nombre + tiempo
-        OutlinedTextField(
-            value = nombreApp,
-            onValueChange = { nombreApp = it },
-            label = { Text("Nombre de la aplicación") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        OutlinedTextField(
-            value = tiempoApp,
-            onValueChange = { tiempoApp = it },
-            label = { Text("Tiempo en minutos") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Button(
-            onClick = {
-                val tiempo = tiempoApp.toIntOrNull()
-                val userId = FirebaseAuth.getInstance().currentUser?.uid
-
-                if (userId != null && nombreApp.isNotBlank() && tiempo != null) {
-                    val app = AppUso(nombre = nombreApp, tiempoMin = tiempo)
-                    FirebaseFirestore.getInstance()
-                        .collection("usoApps")
-                        .document(userId)
-                        .collection(fechaSeleccionada)
-                        .add(app)
-                        .addOnSuccessListener {
-                            Toast.makeText(context, "✅ Guardado exitosamente", Toast.LENGTH_SHORT).show()
-                            nombreApp = ""
-                            tiempoApp = ""
-                            viewModel.cargarDatos(fechaSeleccionada)
-                        }
-                        .addOnFailureListener {
-                            Toast.makeText(context, "❌ Error al guardar", Toast.LENGTH_SHORT).show()
-                        }
-                } else {
-                    Toast.makeText(context, "⚠️ Ingresa los datos correctamente", Toast.LENGTH_SHORT).show()
-                }
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Guardar aplicación")
+        if (mensajeError != null) {
+            Text(mensajeError!!, color = Color.Red)
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        if (listaApps.isEmpty() && mensajeError == null) {
+            Text("⚠️ No hay datos de uso para esta fecha", color = Color.Gray)
+        }
 
-        // LISTADO de apps
         LazyColumn(modifier = Modifier.weight(1f)) {
-            items(viewModel.listaApps) { app ->
+            items(listaApps) { app ->
+                val nombreBonito = mapearNombre(app.nombre)
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -149,7 +145,7 @@ fun PantallaMonitoreoUso(
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
-                            Text(text = app.nombre, fontWeight = FontWeight.Medium)
+                            Text(text = nombreBonito, fontWeight = FontWeight.Medium)
                             Text(text = "Tiempo usado: ${app.tiempoMin} min", fontSize = 12.sp)
                         }
                     }

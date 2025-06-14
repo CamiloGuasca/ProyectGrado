@@ -10,8 +10,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.proyectogrado.domain.model.AppUso
 import com.example.proyectogrado.services.ServicioUsoApps
-import com.example.proyectogrado.utils.PreferenciasEstudiante
 import com.google.firebase.firestore.FirebaseFirestore
+import com.example.proyectogrado.utils.PreferenciasEstudiante
 
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
@@ -22,10 +22,14 @@ fun PantallaEnviarUso(onFinish: () -> Unit) {
     val fecha = servicio.obtenerFechaActual()
     val firestore = FirebaseFirestore.getInstance()
 
-    var resultado by remember { mutableStateOf("Analizando...") }
+    var resultado by remember { mutableStateOf("Analizando uso de apps...") }
 
+    // Lógica para obtener y guardar datos automáticamente
     LaunchedEffect(Unit) {
-        val idEstudiante = PreferenciasEstudiante.obtenerIdEstudiante(context)
+        println("📲 Entrando a PantallaEnviarUso")
+
+        val idEstudiante = PreferenciasEstudiante.obtenerId(context)
+        println("🔍 ID del estudiante: $idEstudiante")
 
         if (idEstudiante.isBlank()) {
             resultado = "⚠️ No se ha configurado el ID del estudiante"
