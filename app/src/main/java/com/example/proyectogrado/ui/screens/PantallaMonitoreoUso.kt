@@ -16,6 +16,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.proyectogrado.domain.model.AppUso
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -24,6 +25,7 @@ import java.util.*
 
 @Composable
 fun PantallaMonitoreoUso(
+    navController: NavController,
     onLogout: () -> Unit
 ) {
     val context = LocalContext.current
@@ -32,22 +34,25 @@ fun PantallaMonitoreoUso(
 
     var fechaSeleccionada by remember { mutableStateOf(dateFormat.format(calendar.time)) }
     var listaApps by remember { mutableStateOf<List<AppUso>>(emptyList()) }
-    var estudianteId by remember { mutableStateOf<String?>(null) }
+    var estudiantesVinculados by remember { mutableStateOf<List<String>>(emptyList()) }
+    var estudianteSeleccionado by remember { mutableStateOf<String?>(null) }
     var mensajeError by remember { mutableStateOf<String?>(null) }
 
     fun mapearNombre(nombrePaquete: String): String {
-        return when (nombrePaquete) {
-            "com.google.android.youtube" -> "YouTube"
-            "com.whatsapp" -> "WhatsApp"
-            "com.instagram.android" -> "Instagram"
-            "com.google.android.gm" -> "Gmail"
-            "com.android.chrome" -> "Chrome"
-            "com.tiktok.android" -> "TikTok"
-            else -> nombrePaquete
-        }
+        val mapa = mapOf(
+            "com.google.android.youtube" to "YouTube",
+            "com.whatsapp" to "WhatsApp",
+            "com.instagram.android" to "Instagram",
+            "com.google.android.gm" to "Gmail",
+            "com.android.chrome" to "Chrome",
+            "com.tiktok.android" to "TikTok",
+            "com.clarocolombia.miclaro" to "Claro",
+            "com.example.proyectogrado" to "Proyecto de Grado"
+        )
+        return mapa[nombrePaquete] ?: nombrePaquete.substringAfterLast('.').replaceFirstChar { it.uppercase() }
     }
 
-    // 🔍 Obtener estudiante vinculado al padre
+    // 🔍 Cargar estudiantes vinculados al padre
     LaunchedEffect(Unit) {
         val padreUid = FirebaseAuth.getInstance().currentUser?.uid
         Log.d("DEBUG", "🔑 Padre actual: $padreUid")
@@ -58,24 +63,26 @@ fun PantallaMonitoreoUso(
                 .get()
                 .addOnSuccessListener { docs ->
                     if (!docs.isEmpty) {
-                        estudianteId = docs.documents.first().getString("id")
-                        Log.d("DEBUG", "👦 Estudiante vinculado: $estudianteId")
+                        val ids = docs.mapNotNull { it.getString("id") }
+                        estudiantesVinculados = ids
+                        estudianteSeleccionado = ids.firstOrNull()
+                        Log.d("DEBUG", "👦 Estudiantes vinculados: $ids")
                     } else {
-                        mensajeError = "❌ No hay estudiante vinculado."
+                        mensajeError = "❌ No hay estudiantes vinculados."
                     }
                 }
                 .addOnFailureListener {
-                    mensajeError = "❌ Error al obtener estudiante vinculado."
+                    mensajeError = "❌ Error al obtener estudiantes vinculados."
                 }
         }
     }
 
-    // 🔁 Cargar apps cada vez que cambie fecha o estudiante
-    LaunchedEffect(fechaSeleccionada, estudianteId) {
-        if (!estudianteId.isNullOrBlank()) {
+    // 🔁 Cargar datos de apps del estudiante seleccionado
+    LaunchedEffect(fechaSeleccionada, estudianteSeleccionado) {
+        if (!estudianteSeleccionado.isNullOrBlank()) {
             FirebaseFirestore.getInstance()
                 .collection("usoApps")
-                .document(estudianteId!!)
+                .document(estudianteSeleccionado!!)
                 .collection(fechaSeleccionada)
                 .get()
                 .addOnSuccessListener { result ->
@@ -93,6 +100,32 @@ fun PantallaMonitoreoUso(
         Text("Monitoreo de Uso de Aplicaciones", style = MaterialTheme.typography.headlineSmall)
         Spacer(modifier = Modifier.height(16.dp))
 
+        // 🔽 Menú de selección de estudiante
+        if (estudiantesVinculados.size > 1) {
+            var expanded by remember { mutableStateOf(false) }
+
+            Text("Selecciona el estudiante:")
+            Box {
+                Button(onClick = { expanded = true }) {
+                    Text(estudianteSeleccionado ?: "Seleccionar")
+                }
+                DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                    estudiantesVinculados.forEach { id ->
+                        DropdownMenuItem(
+                            text = { Text(id) },
+                            onClick = {
+                                estudianteSeleccionado = id
+                                expanded = false
+                            }
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        // 🗓️ Botón para seleccionar fecha
         Button(onClick = {
             DatePickerDialog(
                 context,
@@ -154,6 +187,15 @@ fun PantallaMonitoreoUso(
         }
 
         Spacer(modifier = Modifier.height(16.dp))
+
+        Button(
+            onClick = { navController.popBackStack() },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Volver")
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
 
         Button(
             onClick = {
