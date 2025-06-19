@@ -30,6 +30,7 @@ import com.example.proyectogrado.ui.theme.DarkBackgroundPattern
 import com.example.proyectogrado.ui.theme.LightGrayBackground
 import com.example.proyectogrado.ui.theme.ButtonDarkColor
 import com.example.proyectogrado.ui.theme.TextGray
+import com.example.proyectogrado.utils.PreferenciasEstudiante
 import com.google.firebase.auth.FirebaseAuth
 
 @Composable
@@ -131,7 +132,20 @@ fun LoginScreen(
                         viewModel.login(username, password) { usuario ->
                             if (usuario != null) {
                                 Toast.makeText(context, "Bienvenido, ${usuario.nombre}", Toast.LENGTH_SHORT).show()
-                                onLoginSuccess(usuario.rol.lowercase(Locale.ROOT))
+
+                                // ✅ Limpieza según el rol
+                                when (usuario.rol.lowercase(Locale.ROOT)) {
+                                    "padre", "profesor" -> {
+                                        PreferenciasEstudiante.borrarId(context) // elimina estado anterior
+                                        onLoginSuccess(usuario.rol.lowercase(Locale.ROOT))
+                                    }
+                                    "estudiante" -> {
+                                        onLoginSuccess("estudiante")
+                                    }
+                                    else -> {
+                                        Toast.makeText(context, "Rol no reconocido", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
                             } else {
                                 Toast.makeText(context, "Credenciales incorrectas", Toast.LENGTH_SHORT).show()
                             }

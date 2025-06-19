@@ -27,13 +27,14 @@ fun PantallaEnviarUso() {
     val firestore = FirebaseFirestore.getInstance()
 
     var resultado by remember { mutableStateOf("Analizando uso de apps...") }
-    var enviado by remember { mutableStateOf(false) }
+    var mostrarCerrarSesion by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         val idEstudiante = PreferenciasEstudiante.obtenerId(context)
 
         if (idEstudiante.isBlank()) {
             resultado = "⚠️ No se ha configurado el ID del estudiante"
+            mostrarCerrarSesion = true
             return@LaunchedEffect
         }
 
@@ -41,6 +42,7 @@ fun PantallaEnviarUso() {
 
         if (appsUsadas.isEmpty()) {
             resultado = "No se detectó uso de apps hoy."
+            mostrarCerrarSesion = true
             return@LaunchedEffect
         }
 
@@ -53,9 +55,8 @@ fun PantallaEnviarUso() {
         }
 
         resultado = "✅ Uso registrado correctamente"
-        enviado = true
 
-        // Espera 2 segundos y cierra sesión + app
+        // Cerrar sesión automáticamente
         Handler(Looper.getMainLooper()).postDelayed({
             FirebaseAuth.getInstance().signOut()
             Toast.makeText(context, "Sesión finalizada", Toast.LENGTH_SHORT).show()
@@ -74,9 +75,15 @@ fun PantallaEnviarUso() {
         Spacer(modifier = Modifier.height(16.dp))
         Text(resultado)
 
-        if (enviado) {
+        if (mostrarCerrarSesion) {
             Spacer(modifier = Modifier.height(24.dp))
-            CircularProgressIndicator()
+            Button(onClick = {
+                FirebaseAuth.getInstance().signOut()
+                Toast.makeText(context, "Sesión finalizada", Toast.LENGTH_SHORT).show()
+                (context as? Activity)?.finishAffinity()
+            }) {
+                Text("Cerrar sesión")
+            }
         }
     }
 }

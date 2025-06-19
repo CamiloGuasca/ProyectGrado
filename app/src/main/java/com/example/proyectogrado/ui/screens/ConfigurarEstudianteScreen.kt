@@ -10,6 +10,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.proyectogrado.ui.navigation.Screen
+import com.example.proyectogrado.utils.PreferenciasEstudiante
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -22,7 +23,9 @@ fun ConfigurarEstudianteScreen(
     val context = LocalContext.current
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -44,6 +47,9 @@ fun ConfigurarEstudianteScreen(
                     val db = FirebaseFirestore.getInstance()
                     val uid = FirebaseAuth.getInstance().currentUser?.uid ?: ""
 
+                    // Guardar localmente el ID del estudiante
+                    PreferenciasEstudiante.guardarId(context, estudianteId)
+
                     db.collection("estudiantes")
                         .document(estudianteId)
                         .set(mapOf("id" to estudianteId, "vinculadoPor" to uid))
@@ -55,7 +61,6 @@ fun ConfigurarEstudianteScreen(
                                 popUpTo(Screen.Inicio.route) { inclusive = true }
                             }
 
-                            // Opcional: si quieres ejecutar lógica adicional
                             onConfigurado()
                         }
                         .addOnFailureListener {

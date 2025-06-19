@@ -11,20 +11,18 @@ import kotlinx.coroutines.runBlocking
 val Context.dataStore by preferencesDataStore(name = "configuracion_estudiante")
 
 object PreferenciasEstudiante {
-
-    private val ID_KEY = stringPreferencesKey("id_estudiante")
-
     fun guardarId(context: Context, id: String) {
-        runBlocking {
-            context.dataStore.edit { prefs ->
-                prefs[ID_KEY] = id
-            }
-        }
+        val prefs = context.getSharedPreferences("prefs_estudiante", Context.MODE_PRIVATE)
+        prefs.edit().putString("id", id).apply()
     }
 
     fun obtenerId(context: Context): String {
-        return runBlocking {
-            context.dataStore.data.first()[ID_KEY] ?: ""
-        }
+        val prefs = context.getSharedPreferences("prefs_estudiante", Context.MODE_PRIVATE)
+        return prefs.getString("id", "") ?: ""
+    }
+
+    fun borrarId(context: Context) {
+        val prefs = context.getSharedPreferences("prefs_estudiante", Context.MODE_PRIVATE)
+        prefs.edit().remove("id").apply()
     }
 }
