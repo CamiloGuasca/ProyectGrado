@@ -1,10 +1,12 @@
 package com.example.proyectogrado.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.proyectogrado.ui.screens.*
+import com.example.proyectogrado.viewmodel.RegistroViewModel
 import com.example.proyectogrado.viewmodel.UsuarioViewModel
 import com.example.proyectogrado.viewmodel.VinculacionViewModel
 
@@ -16,6 +18,7 @@ sealed class Screen(val route: String) {
     object Profe : Screen("profe")
     object Vincular : Screen("vincular")
     object Uso : Screen("uso")
+    object ConfigurarEstudiante : Screen("configurar_estudiante")
     object ConfigEstudiante : Screen("configEstudiante")
     object Enviar : Screen("enviar")
 }
@@ -30,6 +33,7 @@ fun AppNavigation(
 
         composable(Screen.Inicio.route) {
             PantallaInicioModo(
+                navController = navController,
                 onSeleccionarPadre = { navController.navigate(Screen.Login.route) },
                 onSeleccionarEstudiante = { navController.navigate(Screen.ConfigEstudiante.route) }
             )
@@ -50,11 +54,19 @@ fun AppNavigation(
         }
 
         composable(Screen.Register.route) {
-            RegisterScreenStyled(
+            val registroViewModel: RegistroViewModel = viewModel()
+            RegisterScreen(
                 onBack = { navController.popBackStack() },
-                viewModel = usuarioViewModel
+                onRegistroExitoso = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Inicio.route) { inclusive = true }
+                    }
+                },
+                viewModel = registroViewModel
             )
         }
+
+
 
         composable(Screen.PadreMenu.route) {
             PantallaPadreMenu(
@@ -90,11 +102,12 @@ fun AppNavigation(
             )
         }
 
-
-        composable(Screen.ConfigEstudiante.route) {
+        composable(Screen.ConfigurarEstudiante.route) {
             ConfigurarEstudianteScreen(
                 navController = navController,
-                onConfigurado = { navController.navigate(Screen.Enviar.route) }
+                onConfigurado = {
+                    navController.navigate(Screen.Enviar.route)
+                }
             )
         }
 

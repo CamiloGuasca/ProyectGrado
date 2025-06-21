@@ -4,6 +4,7 @@ import android.app.Activity
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
@@ -27,23 +28,37 @@ fun PantallaEnviarUso() {
     val firestore = FirebaseFirestore.getInstance()
 
     var resultado by remember { mutableStateOf("Analizando uso de apps...") }
-    var mostrarCerrarSesion by remember { mutableStateOf(false) }
+    var enviado by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
+        Log.d("UsoDeApps", "🚀 Comenzando PantallaEnviarUso")
+
         val idEstudiante = PreferenciasEstudiante.obtenerId(context)
+        Log.d("UsoDeApps", "🧾 ID Estudiante: $idEstudiante")
 
         if (idEstudiante.isBlank()) {
+            Log.w("UsoDeApps", "⚠️ ID del estudiante vacío")
             resultado = "⚠️ No se ha configurado el ID del estudiante"
-            mostrarCerrarSesion = true
+            finalizar(context)
             return@LaunchedEffect
         }
 
         val appsUsadas = servicio.obtenerUsoDeHoy()
+        Log.d("UsoDeApps", "🔍 Total apps encontradas: ${appsUsadas.size}")
 
         if (appsUsadas.isEmpty()) {
             resultado = "No se detectó uso de apps hoy."
-            mostrarCerrarSesion = true
+            enviado = true
+
+            Handler(Looper.getMainLooper()).postDelayed({
+                finalizar(context)
+            }, 3000)
+
             return@LaunchedEffect
+        }
+
+        appsUsadas.forEach {
+            Log.d("UsoDeApps", "✔ ${it.nombre} - ${it.tiempoMin} min")
         }
 
         val coleccion = firestore.collection("usoApps")
@@ -55,13 +70,11 @@ fun PantallaEnviarUso() {
         }
 
         resultado = "✅ Uso registrado correctamente"
+        enviado = true
 
-        // Cerrar sesión automáticamente
         Handler(Looper.getMainLooper()).postDelayed({
-            FirebaseAuth.getInstance().signOut()
-            Toast.makeText(context, "Sesión finalizada", Toast.LENGTH_SHORT).show()
-            (context as? Activity)?.finishAffinity()
-        }, 2000)
+            finalizar(context)
+        }, 3000)
     }
 
     Column(
@@ -75,15 +88,15 @@ fun PantallaEnviarUso() {
         Spacer(modifier = Modifier.height(16.dp))
         Text(resultado)
 
-        if (mostrarCerrarSesion) {
+        if (enviado) {
             Spacer(modifier = Modifier.height(24.dp))
-            Button(onClick = {
-                FirebaseAuth.getInstance().signOut()
-                Toast.makeText(context, "Sesión finalizada", Toast.LENGTH_SHORT).show()
-                (context as? Activity)?.finishAffinity()
-            }) {
-                Text("Cerrar sesión")
-            }
+            CircularProgressIndicator()
         }
     }
+}
+
+private fun finalizar(context: android.content.Context) {
+    FirebaseAuth.getInstance().signOut()
+    Toast.makeText(context, "Sesión finalizada", Toast.LENGTH_SHORT).show()
+    (context as? Activity)?.finishAffinity()
 }

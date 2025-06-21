@@ -59,6 +59,10 @@ dependencies {
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-database-ktx")
     implementation("com.google.firebase:firebase-firestore-ktx")
+    implementation ("androidx.work:work-runtime-ktx:2.9.0")
+
+    implementation ("androidx.work:work-runtime-ktx:2.9.0")
+    implementation ("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2")
 
     // ✅ Navigation Compose
     implementation("androidx.navigation:navigation-compose:2.7.7")

@@ -3,6 +3,7 @@ package com.example.proyectogrado.services
 import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import com.example.proyectogrado.domain.model.AppUso
 import java.text.SimpleDateFormat
@@ -25,6 +26,8 @@ class ServicioUsoApps(private val context: Context) {
         calendar.set(Calendar.MILLISECOND, 0)
         val startTime = calendar.timeInMillis
 
+        Log.d("UsoDeApps", "📅 Consultando desde $startTime hasta $endTime")
+
         val stats = usageStatsManager.queryUsageStats(
             UsageStatsManager.INTERVAL_DAILY,
             startTime,
@@ -34,9 +37,11 @@ class ServicioUsoApps(private val context: Context) {
         stats?.filter { it.totalTimeInForeground > 0 }?.forEach {
             val nombreApp = it.packageName
             val tiempoMin = (it.totalTimeInForeground / 60000).toInt()
+            Log.d("UsoDeApps", "🟢 App: $nombreApp - Min: $tiempoMin")
             usoApps.add(AppUso(nombre = nombreApp, tiempoMin = tiempoMin))
         }
 
+        Log.d("UsoDeApps", "🔍 Total apps detectadas: ${usoApps.size}")
         return usoApps
     }
 

@@ -1,6 +1,5 @@
 package com.example.proyectogrado.ui.screens
 
-import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -8,19 +7,30 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.proyectogrado.ui.navigation.Screen
-import com.example.proyectogrado.utils.PreferenciasEstudiante
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
+import com.example.proyectogrado.ui.viewmodel.ConfigurarEstudianteViewModel
 
 @Composable
 fun ConfigurarEstudianteScreen(
     navController: NavController,
-    onConfigurado: () -> Unit
+    onConfigurado: () -> Unit,
+    viewModel: ConfigurarEstudianteViewModel = viewModel()
 ) {
     var estudianteId by remember { mutableStateOf("") }
     val context = LocalContext.current
+    val mensaje by viewModel.mensaje.collectAsState()
+    val exito by viewModel.exito.collectAsState()
+
+    LaunchedEffect(exito) {
+        if (exito) {
+            navController.navigate(Screen.Inicio.route) {
+                popUpTo(Screen.Inicio.route) { inclusive = true }
+            }
+            onConfigurado()
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -43,36 +53,16 @@ fun ConfigurarEstudianteScreen(
 
         Button(
             onClick = {
-                if (estudianteId.isNotBlank()) {
-                    val db = FirebaseFirestore.getInstance()
-                    val uid = FirebaseAuth.getInstance().currentUser?.uid ?: ""
-
-                    // Guardar localmente el ID del estudiante
-                    PreferenciasEstudiante.guardarId(context, estudianteId)
-
-                    db.collection("estudiantes")
-                        .document(estudianteId)
-                        .set(mapOf("id" to estudianteId, "vinculadoPor" to uid))
-                        .addOnSuccessListener {
-                            Toast.makeText(context, "Estudiante configurado", Toast.LENGTH_SHORT).show()
-
-                            FirebaseAuth.getInstance().signOut()
-                            navController.navigate(Screen.Inicio.route) {
-                                popUpTo(Screen.Inicio.route) { inclusive = true }
-                            }
-
-                            onConfigurado()
-                        }
-                        .addOnFailureListener {
-                            Toast.makeText(context, "Error al guardar", Toast.LENGTH_SHORT).show()
-                        }
-                } else {
-                    Toast.makeText(context, "El ID no puede estar vacío", Toast.LENGTH_SHORT).show()
-                }
+                viewModel.guardarEstudiante(context, estudianteId)
             },
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Guardar")
+        }
+
+        if (mensaje.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(mensaje)
         }
     }
 }
