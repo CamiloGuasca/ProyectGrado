@@ -1,22 +1,19 @@
 package com.example.proyectogrado.ui.screens
 
-
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
+import androidx.compose.material3.* // Importa todos los componentes de Material 3
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.proyectogrado.ui.viewmodel.PadreMenuViewModel
 import com.example.proyectogrado.viewmodel.ProfesorMenuViewModel
 
+@OptIn(ExperimentalMaterial3Api::class) // Necesario para TopAppBar
 @Composable
 fun PantallaProfesorMenu(
-    //onVincular: () -> Unit,
-    //onMonitorear: () -> Unit,
     CrearCurso: () -> Unit,
-    MisCursos: () -> Unit,
+    MisCursos: () -> Unit, // Este callback ya estaba, lo renombramos por claridad en la UI
     onLogout: () -> Unit,
     viewModel: ProfesorMenuViewModel = viewModel()
 ) {
@@ -28,23 +25,71 @@ fun PantallaProfesorMenu(
         viewModel.validarRol(context, onLogout)
     }
 
-    if (rolValido) {
-        Column(Modifier.padding(16.dp)) {
-            Text("Bienvenido Profesor", style = MaterialTheme.typography.titleLarge)
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = CrearCurso) {
-                Text("Mis Cursos")
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Menú del Profesor") } // Título de la barra superior
+            )
+        }
+    ) { paddingValues ->
+        if (rolValido) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize() // Ocupa todo el espacio disponible
+                    .padding(paddingValues) // Aplica el padding del Scaffold
+                    .padding(16.dp), // Padding adicional para el contenido
+                verticalArrangement = Arrangement.Center, // Centra los elementos verticalmente
+                horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally // Centra los elementos horizontalmente
+            ) {
+                Text(
+                    text = "Bienvenido Profesor",
+                    style = MaterialTheme.typography.headlineLarge, // Un título más grande y prominente
+                    modifier = Modifier.padding(bottom = 24.dp) // Más espacio debajo del título
+                )
+                /*
+                Button(
+                    onClick = CrearCurso, // Este botón debería ser para "Crear Nuevo Curso" según tu uso anterior
+                    modifier = Modifier.fillMaxWidth(0.8f) // Ocupa el 80% del ancho
+                ) {
+                    Text("Crear Nuevo Curso")
+                }*/
+                Spacer(modifier = Modifier.height(16.dp)) // Espacio entre botones
+
+                Button(
+                    onClick = MisCursos, // Este botón es para "Mis Cursos"
+                    modifier = Modifier.fillMaxWidth(0.8f)
+                ) {
+                    Text("Ver Mis Cursos")
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Aquí podrías añadir un botón para "Monitorear uso de apps" si lo necesitas,
+                // usando el callback que tenías antes.
+                // Button(onClick = { /* onMonitorear() */ }) {
+                //    Text("Monitorear Uso de Apps")
+                // }
+                // Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = onLogout,
+                    modifier = Modifier.fillMaxWidth(0.8f),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error) // Botón de cerrar sesión en rojo
+                ) {
+                    Text("Cerrar Sesión")
+                }
             }
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = MisCursos){
-                Text("Monitorear uso de apps")
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = onLogout) {
-                Text("Cerrar sesión")
+        } else if (mensaje.isNotEmpty()) {
+            // Muestra el mensaje de error o cargando
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
+            ) {
+                Text(mensaje, color = MaterialTheme.colorScheme.error)
             }
         }
-    } else if (mensaje.isNotEmpty()) {
-        Text(mensaje, color = MaterialTheme.colorScheme.error)
     }
 }

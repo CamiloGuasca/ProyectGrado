@@ -15,12 +15,18 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 class VinculacionViewModel(
     private val EstudianteRepository: EstudianteRepository = EstudianteRepository() // <--- ¡AQUÍ VA!
 ) : ViewModel() {
 
     private val db = FirebaseFirestore.getInstance()
+
+    private val _estudiantes = MutableStateFlow<List<Estudiante>>(emptyList())
+    val estudiantes: StateFlow<List<Estudiante>> = _estudiantes
+
     var listaEstudiantes = mutableStateListOf<Estudiante>()
         private set
 
@@ -89,16 +95,21 @@ class VinculacionViewModel(
                 listaEstudiantes.addAll(lista)
             }
     }
-    fun obtenerEstudiantes(){
+
+    fun obtenerEstudiantes() {
+        Log.d("VinculacionVM", "Llamando a obtenerEstudiantes desde ViewModel...")
         viewModelScope.launch {
-            // Y aquí es donde usas la instancia 'estudianteRepository' que recibiste en el constructor
-            EstudianteRepository.obtenerEstudiantes { lista ->
-                listaEstudiantes.clear()
-                listaEstudiantes.addAll(lista)
-                Log.d("VinculacionVM", "Todos los estudiantes cargados: ${lista.size}")
+            EstudianteRepository.obtenerEstudiantes { loadedEstudiantes ->
+                // *** ESTA ES LA LÍNEA CLAVE: ASEGÚRATE DE QUE ESTÉ ASÍ ***
+                _estudiantes.value = loadedEstudiantes
+                Log.d("VinculacionVM", "Estudiantes recibidos del repositorio: ${loadedEstudiantes.size}")
+                if (loadedEstudiantes.isEmpty()) {
+                    Log.w("VinculacionVM", "El repositorio devolvió una lista vacía de estudiantes.")
+                }
             }
         }
     }
+
     fun programarEnvioDiario(context: Context) {
         val calendar = Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, 23)

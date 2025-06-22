@@ -21,13 +21,13 @@ import android.widget.Toast
 fun PantallaMisCursos(
     cursoViewModel: CursoViewModel,
     onBack: () -> Unit,
-    onVisualizarCurso: (String) -> Unit
+    DetalleCurso: (String) -> Unit,
+    CrearCurso: () -> Unit
 ) {
-    val cursos by cursoViewModel.cursos.collectAsState() // Observa la lista de cursos
+    val cursos by cursoViewModel.cursos.collectAsState()
     var searchTerm by remember { mutableStateOf("") }
     val context = LocalContext.current
 
-    // Cargar cursos al entrar en la pantalla o cuando el término de búsqueda cambia
     LaunchedEffect(searchTerm) {
         cursoViewModel.cargarCursosDelProfesor(searchTerm)
     }
@@ -68,23 +68,25 @@ fun PantallaMisCursos(
             if (cursos.isEmpty()) {
                 Text(text = "No tienes cursos registrados o no se encontraron cursos con ese nombre.",
                     modifier = Modifier.padding(top = 16.dp))
+                // Spacer para empujar el botón si no hay cursos
+                Spacer(modifier = Modifier.weight(1f))
             } else {
                 LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.weight(1f), // <--- Añadir weight para que el botón vaya al final
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(cursos) { curso ->
                         Card(
                             modifier = Modifier.fillMaxWidth(),
-                            onClick = { onVisualizarCurso(curso.nombreCurso) } // Puedes pasar el ID del curso
+                            onClick = { DetalleCurso(curso.nombreCurso) } // Aquí se usa NombreCurso
                         ) {
                             Column(modifier = Modifier.padding(16.dp)) {
-                                Text(text = "Nombre: ${curso.nombreCurso}", style = MaterialTheme.typography.titleLarge)
+                                Text(text = "Nombre: ${curso.nombreCurso}", style = MaterialTheme.typography.titleLarge) // Aquí se usa NombreCurso
                                 Spacer(modifier = Modifier.height(4.dp))
-                                Text(text = "Estudiantes: ${curso.estudiantes.joinToString(", ")}", style = MaterialTheme.typography.bodyMedium)
+                                Text(text = "Estudiantes: ${curso.estudiantes.joinToString(", ")}", style = MaterialTheme.typography.bodyMedium) // Aquí se usa Estudiantes
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Button(
-                                    onClick = { onVisualizarCurso(curso.nombreCurso) }, // Reemplaza con el ID real del curso si lo obtienes
+                                    onClick = { DetalleCurso(curso.idCurso) },
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
                                     Text("Visualizar Curso")
@@ -94,26 +96,15 @@ fun PantallaMisCursos(
                     }
                 }
             }
+            Spacer(modifier = Modifier.height(16.dp)) // Espacio antes del botón
+
+            Button(
+                onClick = CrearCurso,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Agregar Nuevo Curso")
+            }
         }
     }
 }
-/*
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun PreviewPantallaMisCursos() {
-    MaterialTheme {
-        val mockCursos = listOf(
-            Curso(NombreCurso = "Matemáticas I", Profesor = "prof123", Estudiantes = listOf("Ana", "Pedro")),
-            Curso(NombreCurso = "Física Básica", Profesor = "prof123", Estudiantes = listOf("María", "Juan")),
-            Curso(NombreCurso = "Química Avanzada", Profesor = "prof456", Estudiantes = listOf("Luis"))
-        )
-        // Puedes crear un ViewModel de prueba o pasar una lista mock directamente si el preview no usa el ViewModel
-        // Para este preview simple, simulamos la lista de cursos.
-        // En una app real, el ViewModel se inyectaría.
-        PantallaMisCursos(
-            cursoViewModel = CursoViewModel(), // ViewModel de ejemplo para preview, en real se inyecta
-            onBack = {},
-            onVisualizarCurso = { cursoId -> println("Visualizar $cursoId") }
-        )
-    }
-}*/
+
