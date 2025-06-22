@@ -38,6 +38,7 @@ class UsuarioRepositoryImpl : UsuarioRepository {
                 val doc = firestore.collection("usuarios").document(uid).get().await()
                 doc.toObject(Usuario::class.java)
             }
+
         } catch (e: Exception) {
             e.printStackTrace()
             null

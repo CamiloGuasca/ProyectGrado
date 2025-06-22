@@ -1,10 +1,12 @@
 package com.example.proyectogrado.viewmodel
 
 import android.content.Context
+import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.*
+import com.example.proyectogrado.data.repository.EstudianteRepository
 import com.example.proyectogrado.domain.model.Estudiante
 import com.example.proyectogrado.services.EnvioUsoScheduler
 import com.example.proyectogrado.services.EnvioUsoWorker
@@ -14,10 +16,19 @@ import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
 
-class VinculacionViewModel : ViewModel() {
+class VinculacionViewModel(
+    private val EstudianteRepository: EstudianteRepository = EstudianteRepository() // <--- ¡AQUÍ VA!
+) : ViewModel() {
+
     private val db = FirebaseFirestore.getInstance()
     var listaEstudiantes = mutableStateListOf<Estudiante>()
         private set
+
+
+    init {
+        // Llama a la función que usa el repositorio para cargar los estudiantes al iniciar el ViewModel
+        obtenerEstudiantes()
+    }
 
     fun cargarEstudiantesActuales(padreUid: String) {
         db.collection("vinculaciones")
@@ -78,7 +89,16 @@ class VinculacionViewModel : ViewModel() {
                 listaEstudiantes.addAll(lista)
             }
     }
-
+    fun obtenerEstudiantes(){
+        viewModelScope.launch {
+            // Y aquí es donde usas la instancia 'estudianteRepository' que recibiste en el constructor
+            EstudianteRepository.obtenerEstudiantes { lista ->
+                listaEstudiantes.clear()
+                listaEstudiantes.addAll(lista)
+                Log.d("VinculacionVM", "Todos los estudiantes cargados: ${lista.size}")
+            }
+        }
+    }
     fun programarEnvioDiario(context: Context) {
         val calendar = Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, 23)

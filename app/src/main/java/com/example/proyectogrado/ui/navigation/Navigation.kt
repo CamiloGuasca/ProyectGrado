@@ -1,5 +1,7 @@
 package com.example.proyectogrado.ui.navigation
 
+import CursoFormulario
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -21,6 +23,9 @@ sealed class Screen(val route: String) {
     object ConfigurarEstudiante : Screen("configurar_estudiante")
     object ConfigEstudiante : Screen("configEstudiante")
     object Enviar : Screen("enviar")
+    object misCursos : Screen("misCursos")
+    object CrearCurso : Screen("crearCurso")
+
 }
 
 @Composable
@@ -43,6 +48,7 @@ fun AppNavigation(
             LoginScreen(
                 onRegisterClick = { navController.navigate(Screen.Register.route) },
                 onLoginSuccess = { rol ->
+                    Log.d("ROLUSU", "Rol seleccionado: $rol")
                     when (rol.lowercase()) {
                         "padre" -> navController.navigate(Screen.PadreMenu.route)
                         "profesor" -> navController.navigate(Screen.Profe.route)
@@ -81,7 +87,14 @@ fun AppNavigation(
         }
 
         composable(Screen.Profe.route) {
-            ListaUsuariosScreen()
+            PantallaProfesorMenu(
+                CrearCurso = { navController.navigate(Screen.CrearCurso.route) },
+                MisCursos = { navController.navigate(Screen.misCursos.route) },
+                onLogout = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Inicio.route) { inclusive = true }
+                    }
+            })
         }
 
         composable(Screen.Vincular.route) {
@@ -114,6 +127,24 @@ fun AppNavigation(
 
         composable(Screen.Enviar.route) {
             PantallaEnviarUso()
+        }
+
+        composable(Screen.misCursos.route){
+            PantallaMisCursos(
+                cursoViewModel = viewModel(),
+                onBack = { navController.popBackStack() },
+                onVisualizarCurso = { cursoId ->
+                    navController.navigate(Screen.ConfigEstudiante.route)
+                }
+            )
+        }
+        composable(Screen.CrearCurso.route){
+            CursoFormulario(
+                onCursoCreado = { curso ->
+                    println("Curso Creado: ${curso.nombreCurso}, Estudiantes: ${curso.estudiantes}")
+                },
+
+            )
         }
 
     }
