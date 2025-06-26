@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">ProyectoGrado</string>
+    <string name="accessibility_service_description">Permite a la aplicación monitorear y aplicar restricciones de uso de otras aplicaciones.</string>
+    <string name="accessibility_service_label">Servicio de Bloqueo de Apps</string>
 </resources>

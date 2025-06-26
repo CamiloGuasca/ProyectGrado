@@ -1,102 +1,69 @@
+// app/src/main/java/com/example/proyectogrado/ui/screens/PantallaEnviarUso.kt
 package com.example.proyectogrado.ui.screens
 
-import android.app.Activity
-import android.os.Build
-import android.os.Handler
-import android.os.Looper
-import android.util.Log
-import android.widget.Toast
-import androidx.annotation.RequiresApi
+import android.content.Context
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.example.proyectogrado.services.ServicioUsoApps
-import com.example.proyectogrado.utils.PreferenciasEstudiante
+import androidx.navigation.NavController
+import com.example.proyectogrado.viewmodel.EnviarUsoViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
+import android.widget.Toast
+import android.util.Log // Importar Log
 
-@RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaEnviarUso() {
+fun PantallaEnviarUso(
+    navController: NavController,
+    estudianteId: String, // Ahora se espera el ID del estudiante como parámetro
+    onLogout: () -> Unit // Ahora se espera la acción de logout como parámetro
+) {
     val context = LocalContext.current
-    val servicio = remember { ServicioUsoApps(context) }
-    val fecha = servicio.obtenerFechaActual()
-    val firestore = FirebaseFirestore.getInstance()
-
-    var resultado by remember { mutableStateOf("Analizando uso de apps...") }
-    var enviado by remember { mutableStateOf(false) }
-
-    LaunchedEffect(Unit) {
-        Log.d("UsoDeApps", "🚀 Comenzando PantallaEnviarUso")
-
-        val idEstudiante = PreferenciasEstudiante.obtenerId(context)
-        Log.d("UsoDeApps", "🧾 ID Estudiante: $idEstudiante")
-
-        if (idEstudiante.isBlank()) {
-            Log.w("UsoDeApps", "⚠️ ID del estudiante vacío")
-            resultado = "⚠️ No se ha configurado el ID del estudiante"
-            finalizar(context)
-            return@LaunchedEffect
-        }
-
-        val appsUsadas = servicio.obtenerUsoDeHoy()
-        Log.d("UsoDeApps", "🔍 Total apps encontradas: ${appsUsadas.size}")
-
-        if (appsUsadas.isEmpty()) {
-            resultado = "No se detectó uso de apps hoy."
-            enviado = true
-
-            Handler(Looper.getMainLooper()).postDelayed({
-                finalizar(context)
-            }, 3000)
-
-            return@LaunchedEffect
-        }
-
-        appsUsadas.forEach {
-            Log.d("UsoDeApps", "✔ ${it.nombre} - ${it.tiempoMin} min")
-        }
-
-        val coleccion = firestore.collection("usoApps")
-            .document(idEstudiante)
-            .collection(fecha)
-
-        appsUsadas.forEach { app ->
-            coleccion.add(app)
-        }
-
-        resultado = "✅ Uso registrado correctamente"
-        enviado = true
-
-        Handler(Looper.getMainLooper()).postDelayed({
-            finalizar(context)
-        }, 3000)
-    }
+    val enviarUsoViewModel: EnviarUsoViewModel = viewModel()
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
+        modifier = Modifier.fillMaxSize().padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("Enviando uso de aplicaciones...", style = MaterialTheme.typography.titleLarge)
+        Text(
+            text = "Pantalla para Enviar Uso de la App",
+            style = MaterialTheme.typography.headlineMedium
+        )
         Spacer(modifier = Modifier.height(16.dp))
-        Text(resultado)
+        Text(
+            text = "ID del estudiante: ${estudianteId.ifEmpty { "No especificado" }}",
+            style = MaterialTheme.typography.bodyLarge
+        )
+        Spacer(modifier = Modifier.height(32.dp))
+        Button(
+            onClick = {
+                if (estudianteId.isNotBlank()) {
+                    Log.d("PantallaEnviarUso", "Programando envío de uso para estudiante: $estudianteId")
+                    enviarUsoViewModel.programarEnvioDeUso()
+                    Toast.makeText(context, "Envío de uso programado.", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(context, "ID de estudiante no válido.", Toast.LENGTH_SHORT).show()
+                }
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Enviar Uso Ahora (Simulado)")
+        }
 
-        if (enviado) {
-            Spacer(modifier = Modifier.height(24.dp))
-            CircularProgressIndicator()
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(
+            onClick = onLogout, // Usar el onLogout proporcionado
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+        ) {
+            Text("Cerrar Sesión")
         }
     }
-}
-
-private fun finalizar(context: android.content.Context) {
-    FirebaseAuth.getInstance().signOut()
-    Toast.makeText(context, "Sesión finalizada", Toast.LENGTH_SHORT).show()
-    (context as? Activity)?.finishAffinity()
 }

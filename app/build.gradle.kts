@@ -60,7 +60,8 @@ dependencies {
     implementation("com.google.firebase:firebase-database-ktx")
     implementation("com.google.firebase:firebase-firestore-ktx")
     implementation ("androidx.work:work-runtime-ktx:2.9.0")
-
+    implementation("com.jakewharton.threetenabp:threetenabp:1.4.4")
+// O la versión más reciente si la encuentras
     implementation ("androidx.work:work-runtime-ktx:2.9.0")
     implementation ("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2")
 

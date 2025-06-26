@@ -1,46 +1,74 @@
+// app/src/main/java/com/example/proyectogrado/ui/screens/PantallaPadreMenu.kt
 package com.example.proyectogrado.ui.screens
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.proyectogrado.ui.viewmodel.PadreMenuViewModel
 
 @Composable
 fun PantallaPadreMenu(
     onVincular: () -> Unit,
     onMonitorear: () -> Unit,
-    onLogout: () -> Unit,
-    viewModel: PadreMenuViewModel = viewModel()
+    onConfigurarHorarioEstudiante: () -> Unit,
+    onLogout: () -> Unit
 ) {
-    val context = LocalContext.current
-    val rolValido by viewModel.rolValido.collectAsState()
-    val mensaje by viewModel.mensaje.collectAsState()
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = "Menú del Padre",
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.padding(bottom = 32.dp)
+        )
 
-    LaunchedEffect(Unit) {
-        viewModel.validarRol(context, onLogout)
-    }
-
-    if (rolValido) {
-        Column(Modifier.padding(16.dp)) {
-            Text("Bienvenido padre", style = MaterialTheme.typography.titleLarge)
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = onVincular) {
-                Text("Vincular estudiante")
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = onMonitorear) {
-                Text("Monitorear uso de apps")
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = onLogout) {
-                Text("Cerrar sesión")
-            }
+        Button(
+            onClick = onVincular,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp)
+        ) {
+            Text("Vincular Estudiante")
         }
-    } else if (mensaje.isNotEmpty()) {
-        Text(mensaje, color = MaterialTheme.colorScheme.error)
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(
+            onClick = onMonitorear,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp)
+        ) {
+            Text("Monitorear Uso de Apps")
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(
+            onClick = onConfigurarHorarioEstudiante,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp)
+        ) {
+            Text("Configurar Horarios Estudiante")
+        }
+        Spacer(modifier = Modifier.height(32.dp))
+
+        Button(
+            onClick = onLogout,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+        ) {
+            Text("Cerrar Sesión")
+        }
     }
 }
