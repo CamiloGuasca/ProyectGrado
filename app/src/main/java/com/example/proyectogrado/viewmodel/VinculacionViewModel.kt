@@ -19,7 +19,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
 class VinculacionViewModel(
-    private val EstudianteRepository: EstudianteRepository = EstudianteRepository() // <--- ¡AQUÍ VA!
+    private val EstudianteRepository: EstudianteRepository = EstudianteRepository()
 ) : ViewModel() {
 
     private val db = FirebaseFirestore.getInstance()
@@ -27,12 +27,15 @@ class VinculacionViewModel(
     private val _estudiantes = MutableStateFlow<List<Estudiante>>(emptyList())
     val estudiantes: StateFlow<List<Estudiante>> = _estudiantes
 
+    // --- NUEVO: Para el estudiante seleccionado ---
+    private val _estudianteSeleccionado = MutableStateFlow<Estudiante?>(null)
+    val estudianteSeleccionado: StateFlow<Estudiante?> = _estudianteSeleccionado
+    // ---------------------------------------------
+
     var listaEstudiantes = mutableStateListOf<Estudiante>()
         private set
 
-
     init {
-        // Llama a la función que usa el repositorio para cargar los estudiantes al iniciar el ViewModel
         obtenerEstudiantes()
     }
 
@@ -64,12 +67,10 @@ class VinculacionViewModel(
         val estudiante = Estudiante(id = id, nombre = nombre, vinculadoPor = padreUid)
 
         viewModelScope.launch {
-            // Guardar en colección principal
             FirebaseFirestore.getInstance().collection("estudiantes")
                 .document(id)
                 .set(estudiante)
                 .addOnSuccessListener {
-                    // Luego, guardar también en la subcolección del padre
                     FirebaseFirestore.getInstance()
                         .collection("vinculaciones")
                         .document(padreUid)
@@ -82,7 +83,6 @@ class VinculacionViewModel(
                 }
         }
     }
-
 
     fun cargarEstudiantes(padreUid: String) {
         db.collection("vinculaciones")
@@ -100,7 +100,6 @@ class VinculacionViewModel(
         Log.d("VinculacionVM", "Llamando a obtenerEstudiantes desde ViewModel...")
         viewModelScope.launch {
             EstudianteRepository.obtenerEstudiantes { loadedEstudiantes ->
-                // *** ESTA ES LA LÍNEA CLAVE: ASEGÚRATE DE QUE ESTÉ ASÍ ***
                 _estudiantes.value = loadedEstudiantes
                 Log.d("VinculacionVM", "Estudiantes recibidos del repositorio: ${loadedEstudiantes.size}")
                 if (loadedEstudiantes.isEmpty()) {
@@ -109,6 +108,25 @@ class VinculacionViewModel(
             }
         }
     }
+
+    // --- NUEVO: Función para cargar un estudiante por su ID ---
+    fun cargarEstudiantePorId(estudianteId: String) {
+        viewModelScope.launch {
+            try {
+                // Aquí usamos el repositorio que ya tienes
+                EstudianteRepository.obtenerEstudiantePorId(estudianteId) { estudiante ->
+                    _estudianteSeleccionado.value = estudiante
+                    if (estudiante == null) {
+                        Log.e("VinculacionVM", "Estudiante con ID $estudianteId no encontrado.")
+                    }
+                }
+            } catch (e: Exception) {
+                _estudianteSeleccionado.value = null
+                Log.e("VinculacionVM", "Error al cargar estudiante $estudianteId: ${e.message}")
+            }
+        }
+    }
+    // --------------------------------------------------------
 
     fun programarEnvioDiario(context: Context) {
         val calendar = Calendar.getInstance().apply {

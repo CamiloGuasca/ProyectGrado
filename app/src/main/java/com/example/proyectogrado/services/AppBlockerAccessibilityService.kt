@@ -6,7 +6,7 @@ import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.Intent
 import android.view.accessibility.AccessibilityEvent
 import android.util.Log
-import com.example.proyectogrado.data.repository.EstudianteRepository // Tu EstudianteRepository (fusionado)
+import com.example.proyectogrado.data.repository.EstudianteRepository
 import com.example.proyectogrado.utils.PreferenciasEstudiante // TU PreferenciasEstudiante (fusionado)
 import com.example.proyectogrado.domain.model.HorarioUso // Asegúrate de importar HorarioUso si es necesario para el for-loop
 import com.google.firebase.firestore.ListenerRegistration

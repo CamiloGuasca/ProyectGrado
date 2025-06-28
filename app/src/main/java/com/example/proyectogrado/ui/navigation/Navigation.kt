@@ -36,8 +36,12 @@ sealed class Screen(val route: String) {
     object Vincular : Screen("vincular")
     object Uso : Screen("uso")
     object ConfigurarEstudiante : Screen("configurar_estudiante_screen")
+    object DetalleEstudiante : Screen("detalleEstudiante/{estudianteId}") {
+        fun createRoute(estudianteId: String) = "detalleEstudiante/$estudianteId"
+    }
     object Bienvenida : Screen("pantalla_bienvenida")
     object HomeScreen : Screen("home_screen")
+
 
     // Rutas con argumentos
     object Enviar : Screen("enviar_uso_activo/{idEstudiante}") {
@@ -74,9 +78,7 @@ fun AppNavigation(
     vinculacionViewModel: VinculacionViewModel
 ) {
     val context = LocalContext.current
-
     val studentIdFromPrefs = PreferenciasEstudiante.obtenerId(context)
-
     val startDestination = if (studentIdFromPrefs.isNotBlank()) {
         Log.d("AppNavigation", "Estudiante ID '${studentIdFromPrefs}' encontrado en preferencias. Navegando a HomeScreen.")
         Screen.HomeScreen.route
@@ -119,6 +121,7 @@ fun AppNavigation(
     }}
 
     NavHost(navController = navController, startDestination = startDestination) {
+        // --- Comienzo de tus rutas existentes (sin cambios aquí) ---
         composable(Screen.Inicio.route) {
             PantallaInicioModo(
                 navController = navController,
@@ -270,8 +273,9 @@ fun AppNavigation(
                     cursoViewModel = cursoViewModel,
                     vinculacionViewModel = vinculacionViewModel,
                     onBack = { navController.popBackStack() },
-                    onConsultarEstudiante = { estudianteId ->
-                        Toast.makeText(context, "Consultando estudiante: $estudianteId", Toast.LENGTH_SHORT).show()
+                    DetalleEstudiante = { estudianteId ->
+                        Log.d("Navigation", "Navegando a DetalleEstudiante con ID: $estudianteId")
+                        navController.navigate(Screen.DetalleEstudiante.createRoute(estudianteId))
                     }
                 )
             } else {
@@ -279,15 +283,35 @@ fun AppNavigation(
             }
         }
 
+        // --- ¡AÑADE ESTE BLOQUE EXACTAMENTE AQUÍ DENTRO DEL NavHost! ---
+        composable(
+            route = Screen.DetalleEstudiante.route,
+            arguments = listOf(navArgument("estudianteId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val estudianteId = backStackEntry.arguments?.getString("estudianteId")
+
+            if (estudianteId != null) {
+                // Asegúrate de usar la instancia de vinculacionViewModel que ya se está pasando a AppNavigation
+                val vinculacionVM: VinculacionViewModel = viewModel(factory = vinculacionViewModelFactory)
+
+                PantallaDetalleEstudiante(
+                    estudianteId = estudianteId,
+                    vinculacionViewModel = vinculacionVM, // Pasa la instancia del ViewModel
+                    onBack = { navController.popBackStack() }
+                )
+            } else {
+                Text("Error: ID del estudiante no proporcionado para la vista de detalle.")
+            }
+        }
+        // ----------------------------------------------------------------------
+
         // --- Rutas de Horarios del Compañero (¡Con la PantallaListaEstudiantesParaHorario CORRECTA!) ---
         composable(Screen.ListaEstudiantesParaHorario.route) {
             val vinculacionVM: VinculacionViewModel = viewModel(factory = vinculacionViewModelFactory) // Obtén la instancia de VinculacionViewModel
             PantallaListaEstudiantesParaHorario(
                 viewModel = vinculacionVM, // Pasa el VinculacionViewModel
                 onGestionarHorarios = { estudianteId, nombreEstudiante ->
-                    // Navega a GestionHorariosEstudiante
-                    // Asegúrate de que GestionHorariosEstudiante.createRoute pueda manejar un nombre nulo si es el caso
-                    val route = Screen.GestionHorariosEstudiante.createRoute(estudianteId) // El nombre se puede pasar como argumento si la ruta lo soporta
+                    val route = Screen.GestionHorariosEstudiante.createRoute(estudianteId)
                     navController.navigate(route)
                 },
                 onBack = { navController.popBackStack() }
@@ -299,7 +323,6 @@ fun AppNavigation(
             arguments = listOf(navArgument("idEstudiante") { type = NavType.StringType })
         ) { backStackEntry ->
             val idEstudiante = backStackEntry.arguments?.getString("idEstudiante")
-            // Puedes intentar obtener el nombre del estudiante de algún lugar (ej: VinculacionViewModel.estudiantes, o pasarlo como argumento)
             val nombreEstudiante = "Estudiante ${idEstudiante?.take(8)}..." // Placeholder si no tienes el nombre real
 
             if (idEstudiante != null) {
@@ -339,11 +362,6 @@ fun AppNavigation(
                 Text("Error: ID de estudiante no proporcionado para configurar horario.")
             }
         }
-        // ... (todo tu código anterior sin cambios)
-
-        composable(Screen.ConfigurarEstudiante.route) {
-            ConfigurarEstudianteScreen(navController = navController)
-        }
 
         composable(Screen.HomeScreen.route) {
             HomeScreen(
@@ -357,70 +375,5 @@ fun AppNavigation(
             )
         }
 
-
-        composable(
-            route = Screen.PantallaEnviarUso.route,
-            arguments = listOf(navArgument("idEstudiante") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val idEstudiante = backStackEntry.arguments?.getString("idEstudiante")
-            if (idEstudiante != null) {
-                PantallaEnviarUso(
-                    navController = navController,
-                    estudianteId = idEstudiante,
-                    onLogout = {
-                        FirebaseAuth.getInstance().signOut()
-                        navController.navigate(Screen.Inicio.route) {
-                            popUpTo(Screen.PantallaEnviarUso.route) { inclusive = true }
-                        }
-                    }
-                )
-            } else {
-                Text("Error: ID de estudiante no proporcionado para enviar uso.")
-            }
-        }
-
-        // ... (y el resto de tu código sigue igual)
-// ... (todo tu código anterior sin cambios)
-
-        composable(Screen.ConfigurarEstudiante.route) {
-            ConfigurarEstudianteScreen(navController = navController)
-        }
-
-        composable(Screen.HomeScreen.route) {
-            HomeScreen(
-                navController = navController,
-                onLogout = {
-                    FirebaseAuth.getInstance().signOut()
-                    navController.navigate(Screen.Inicio.route) {
-                        popUpTo(Screen.HomeScreen.route) { inclusive = true }
-                    }
-                }
-            )
-        }
-
-        composable(
-            route = Screen.PantallaEnviarUso.route,
-            arguments = listOf(navArgument("idEstudiante") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val idEstudiante = backStackEntry.arguments?.getString("idEstudiante")
-            if (idEstudiante != null) {
-                PantallaEnviarUso(
-                    navController = navController,
-                    estudianteId = idEstudiante,
-                    onLogout = {
-                        FirebaseAuth.getInstance().signOut()
-                        navController.navigate(Screen.Inicio.route) {
-                            popUpTo(Screen.PantallaEnviarUso.route) { inclusive = true }
-                        }
-                    }
-                )
-            } else {
-                Text("Error: ID de estudiante no proporcionado para enviar uso.")
-            }
-        }
-
-        // ... (y el resto de tu código sigue igual)
-
-
-    }
+    } // Fin del NavHost
 }

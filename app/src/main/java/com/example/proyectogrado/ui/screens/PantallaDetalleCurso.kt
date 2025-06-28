@@ -31,7 +31,7 @@ fun PantallaDetalleCurso(
     cursoViewModel: CursoViewModel,
     vinculacionViewModel: VinculacionViewModel, // Para la lista de estudiantes disponibles
     onBack: () -> Unit,
-    onConsultarEstudiante: (String) -> Unit // Recibe el ID del estudiante
+    DetalleEstudiante: (String) -> Unit // Recibe el ID del estudiante
 ) {
     val context = LocalContext.current
     val curso by cursoViewModel.cursoSeleccionado.collectAsState() // Esto solo para mostrar detalles básicos del curso
@@ -179,7 +179,7 @@ fun PantallaDetalleCurso(
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Button(
                                         onClick = {
-                                            onConsultarEstudiante(estudiante.id) // ¡Pasamos el ID correcto!
+                                            DetalleEstudiante(estudiante.id) // ¡Pasamos el ID correcto!
                                         },
                                         modifier = Modifier.fillMaxWidth()
                                     ) {

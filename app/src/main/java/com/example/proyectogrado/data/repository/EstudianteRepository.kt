@@ -1,18 +1,17 @@
-// app/src/main/java/com/example/proyectogrado/data/repository/EstudianteRepository.kt
 package com.example.proyectogrado.data.repository
 
 import com.example.proyectogrado.domain.model.Estudiante
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.QuerySnapshot
 import kotlinx.coroutines.tasks.await
-import android.util.Log // Importar para Log
+import android.util.Log
 
 // Repositorio para operaciones relacionadas con la entidad Estudiante en Firestore.
 // Este archivo fusiona tus funciones y las de tu compañero.
 class EstudianteRepository {
 
     private val db = FirebaseFirestore.getInstance()
-    private val TAG = "EstudianteRepository" // Para logs
+    private val TAG = "EstudianteRepository"
 
     // --- Funciones de tu compañero (vincularEstudiante, obtenerEstudiantesPorPadre) ---
 
@@ -54,9 +53,9 @@ class EstudianteRepository {
     suspend fun getHorariosUso(estudianteId: String): QuerySnapshot {
         return db.collection("estudiantes")
             .document(estudianteId)
-            .collection("horariosUso") // Subcolección donde esperas los horarios
+            .collection("horariosUso")
             .get()
-            .await() // Espera a que la operación asíncrona de Firestore se complete
+            .await()
     }
 
     /**
@@ -72,11 +71,10 @@ class EstudianteRepository {
         }
 
         db.collection("estudiantes")
-            .whereIn("id", estudianteIds) // Asume que el campo 'id' dentro del documento es el ID del estudiante
+            .whereIn("id", estudianteIds)
             .get()
             .addOnSuccessListener { result ->
                 val estudiantes = result.mapNotNull { document ->
-                    // Intenta mapear el documento a un objeto Estudiante
                     document.toObject(Estudiante::class.java)
                 }
                 Log.d(TAG, "Estudiantes obtenidos por IDs: ${estudiantes.size} encontrados.")
@@ -98,6 +96,31 @@ class EstudianteRepository {
             }
             .addOnFailureListener {
                 onResult(emptyList())
+            }
+    }
+
+    /**
+     * Obtiene un solo objeto Estudiante por su ID.
+     * @param estudianteId El ID del estudiante a buscar.
+     * @param onResult Una función lambda que recibe el objeto Estudiante? (null si no se encuentra o hay un error).
+     */
+    fun obtenerEstudiantePorId(estudianteId: String, onResult: (Estudiante?) -> Unit) {
+        db.collection("estudiantes")
+            .document(estudianteId)
+            .get()
+            .addOnSuccessListener { documentSnapshot ->
+                if (documentSnapshot.exists()) {
+                    val estudiante = documentSnapshot.toObject(Estudiante::class.java)
+                    Log.d(TAG, "Estudiante con ID $estudianteId encontrado: ${estudiante?.nombre}")
+                    onResult(estudiante)
+                } else {
+                    Log.d(TAG, "Estudiante con ID $estudianteId no encontrado.")
+                    onResult(null) // No se encontró el documento
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.e(TAG, "Error al obtener estudiante por ID $estudianteId: ${e.message}", e)
+                onResult(null) // Error al obtener el documento
             }
     }
 }
