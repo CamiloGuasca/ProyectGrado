@@ -16,6 +16,7 @@ fun PantallaPadreMenu(
     onVincular: () -> Unit,
     onMonitorear: () -> Unit,
     onConfigurarHorarioEstudiante: () -> Unit,
+    onVerGraficaUso: () -> Unit, // NUEVO callback para botón de gráfica
     onLogout: () -> Unit
 ) {
     Column(
@@ -39,6 +40,7 @@ fun PantallaPadreMenu(
         ) {
             Text("Vincular Estudiante")
         }
+
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
@@ -49,6 +51,7 @@ fun PantallaPadreMenu(
         ) {
             Text("Monitorear Uso de Apps")
         }
+
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
@@ -59,6 +62,20 @@ fun PantallaPadreMenu(
         ) {
             Text("Configurar Horarios Estudiante")
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // 🔵 NUEVO BOTÓN: Ver gráfica de uso de apps
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(
+            onClick = onVerGraficaUso,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp)
+        ) {
+            Text("Ver gráfica de uso de apps")
+        }
+
         Spacer(modifier = Modifier.height(32.dp))
 
         Button(

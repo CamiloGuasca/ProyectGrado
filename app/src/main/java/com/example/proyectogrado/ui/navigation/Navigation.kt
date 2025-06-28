@@ -65,6 +65,12 @@ sealed class Screen(val route: String) {
     object PantallaEnviarUso : Screen("pantalla_enviar_uso/{idEstudiante}") {
         fun createRoute(idEstudiante: String) = "pantalla_enviar_uso/$idEstudiante"
     }
+
+    object SeleccionarEstudianteUso : Screen("seleccionar_estudiante_uso")
+    object GraficoUso : Screen("grafico_uso/{idEstudiante}") {
+        fun createRoute(idEstudiante: String) = "grafico_uso/$idEstudiante"
+    }
+
 }
 
 @Composable
@@ -160,6 +166,7 @@ fun AppNavigation(
                 onVincular = { navController.navigate(Screen.Vincular.route) },
                 onMonitorear = { navController.navigate(Screen.Uso.route) },
                 onConfigurarHorarioEstudiante = { navController.navigate(Screen.ListaEstudiantesParaHorario.route) },
+                onVerGraficaUso = { navController.navigate(Screen.SeleccionarEstudianteUso.route) }, // 👈 NUEVA ACCIÓN
                 onLogout = {
                     FirebaseAuth.getInstance().signOut()
                     navController.navigate(Screen.Inicio.route) {
@@ -167,6 +174,28 @@ fun AppNavigation(
                     }
                 }
             )
+        }
+        composable(Screen.SeleccionarEstudianteUso.route) {
+            SeleccionarEstudianteUsoScreen(
+                onEstudianteSeleccionado = { idEstudiante ->
+                    navController.navigate(Screen.GraficoUso.createRoute(idEstudiante))
+                },
+                onBack = { navController.popBackStack() }
+            )
+        }
+        composable(
+            route = Screen.GraficoUso.route,
+            arguments = listOf(navArgument("idEstudiante") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val idEstudiante = backStackEntry.arguments?.getString("idEstudiante")
+            if (idEstudiante != null) {
+                GraficoUsoAppsScreen(
+                    estudianteId = idEstudiante,
+                    onBack = { navController.popBackStack() }
+                )
+            } else {
+                Text("Error: ID del estudiante no proporcionado.")
+            }
         }
 
         composable(Screen.Profe.route) {

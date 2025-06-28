@@ -52,6 +52,8 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    //Graficas
+    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
 
     // ✅ Firebase
     implementation(platform("com.google.firebase:firebase-bom:33.15.0"))
