@@ -10,9 +10,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
+import com.example.proyectogrado.ui.navigation.Screen
 
 @Composable
 fun PantallaPadreMenu(
+    navController: NavHostController,
     onVincular: () -> Unit,
     onMonitorear: () -> Unit,
     onConfigurarHorarioEstudiante: () -> Unit,
@@ -59,6 +62,13 @@ fun PantallaPadreMenu(
         ) {
             Text("Configurar Horarios Estudiante")
         }
+        Button(
+            onClick = { navController.navigate(Screen.PerfilUsuario.route) },
+            modifier = Modifier.fillMaxWidth().padding(8.dp)
+        ) {
+            Text("Mi Perfil")
+        }
+
         Spacer(modifier = Modifier.height(32.dp))
 
         Button(

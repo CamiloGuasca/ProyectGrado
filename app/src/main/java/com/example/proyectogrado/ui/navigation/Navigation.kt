@@ -24,6 +24,7 @@ import com.example.proyectogrado.viewmodel.UsuarioViewModel
 import com.example.proyectogrado.viewmodel.VinculacionViewModel // Importa VinculacionViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.example.proyectogrado.utils.PreferenciasEstudiante
+import com.example.proyectogrado.viewmodel.PerfilUsuarioViewModel
 
 // Definición de todas las rutas de navegación.
 // ¡Esta clase contiene todas tus rutas! No hay archivo Screen.kt separado.
@@ -34,6 +35,7 @@ sealed class Screen(val route: String) {
     object PadreMenu : Screen("padreMenu")
     object Profe : Screen("profe")
     object Vincular : Screen("vincular")
+    object PerfilUsuario : Screen("perfil_usuario")
     object Uso : Screen("uso")
     object ConfigurarEstudiante : Screen("configurar_estudiante_screen")
     object DetalleEstudiante : Screen("detalleEstudiante/{estudianteId}") {
@@ -160,6 +162,7 @@ fun AppNavigation(
 
         composable(Screen.PadreMenu.route) {
             PantallaPadreMenu(
+                navController = navController,
                 onVincular = { navController.navigate(Screen.Vincular.route) },
                 onMonitorear = { navController.navigate(Screen.Uso.route) },
                 onConfigurarHorarioEstudiante = { navController.navigate(Screen.ListaEstudiantesParaHorario.route) },
@@ -172,9 +175,11 @@ fun AppNavigation(
             )
         }
 
+
         composable(Screen.Profe.route) {
             val profesorMenuViewModel: ProfesorMenuViewModel = viewModel(factory = profesorMenuViewModelFactory)
             PantallaProfesorMenu(
+                navController = navController, // ✅ NUEVO
                 CrearCurso = { navController.navigate(Screen.CrearCurso.route) },
                 MisCursos = { navController.navigate(Screen.misCursos.route) },
                 onLogout = {
@@ -186,6 +191,7 @@ fun AppNavigation(
                 viewModel = profesorMenuViewModel
             )
         }
+
 
         composable(Screen.Vincular.route) {
             VincularEstudianteScreen(
@@ -374,6 +380,14 @@ fun AppNavigation(
                 }
             )
         }
+
+        composable(Screen.PerfilUsuario.route) {
+            PantallaPerfilUsuario(
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+
 
     } // Fin del NavHost
 }

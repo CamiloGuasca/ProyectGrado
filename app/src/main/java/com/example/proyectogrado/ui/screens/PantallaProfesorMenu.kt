@@ -7,11 +7,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
+import com.example.proyectogrado.ui.navigation.Screen
 import com.example.proyectogrado.viewmodel.ProfesorMenuViewModel
 
 @OptIn(ExperimentalMaterial3Api::class) // Necesario para TopAppBar
 @Composable
 fun PantallaProfesorMenu(
+    navController: NavHostController,
     CrearCurso: () -> Unit,
     MisCursos: () -> Unit, // Este callback ya estaba, lo renombramos por claridad en la UI
     onLogout: () -> Unit,
@@ -61,6 +64,13 @@ fun PantallaProfesorMenu(
                 ) {
                     Text("Ver Mis Cursos")
                 }
+                Button(
+                    onClick = { navController.navigate(Screen.PerfilUsuario.route) },
+                    modifier = Modifier.fillMaxWidth().padding(8.dp)
+                ) {
+                    Text("Mi Perfil")
+                }
+
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Aquí podrías añadir un botón para "Monitorear uso de apps" si lo necesitas,
