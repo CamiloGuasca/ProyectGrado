@@ -28,7 +28,7 @@ fun HomeScreen(
             .fillMaxSize()
             .background(
                 brush = Brush.verticalGradient(
-                    colors = listOf(Color(0xFF6EC6FF), Color(0xFFE3F2FD))
+                    colors = listOf(Color(0xFF0D47A1), Color(0xFF5472D3)) // Azul oscuro a azul medio
                 )
             ),
         contentAlignment = Alignment.Center
@@ -41,7 +41,7 @@ fun HomeScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Image(
-                painter = painterResource(id = R.drawable.ic_kids), // Asegúrate de tener esta imagen
+                painter = painterResource(id = R.drawable.ic_kids),
                 contentDescription = "Logo",
                 modifier = Modifier.size(150.dp)
             )
@@ -52,7 +52,7 @@ fun HomeScreen(
                 text = "¡Bienvenidos!",
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF01579B)
+                color = Color.White
             )
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -60,7 +60,7 @@ fun HomeScreen(
             Text(
                 text = "La mejor aplicación para el cuidado y monitoreo de estudiantes y niños.",
                 fontSize = 18.sp,
-                color = Color.DarkGray,
+                color = Color(0xFFE0E0E0),
                 lineHeight = 22.sp,
                 modifier = Modifier.padding(horizontal = 16.dp),
             )
@@ -74,9 +74,14 @@ fun HomeScreen(
                     }
                 },
                 shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0277BD))
+                colors = ButtonDefaults.buttonColors(containerColor = Color.White)
             ) {
-                Text(text = "Continuar", color = Color.White, fontSize = 18.sp)
+                Text(
+                    text = "Continuar",
+                    color = Color(0xFF0D47A1),
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
             }
         }
     }

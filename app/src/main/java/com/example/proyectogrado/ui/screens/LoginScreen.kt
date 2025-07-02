@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -23,6 +24,7 @@ import com.example.proyectogrado.viewmodel.UsuarioViewModel
 import com.google.firebase.auth.FirebaseAuth
 import java.util.*
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
     onLoginSuccess: (String) -> Unit,
@@ -33,82 +35,101 @@ fun LoginScreen(
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(32.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+            .background(Color(0xFF0D47A1)) // Azul institucional
+            .padding(32.dp)
     ) {
-        Icon(Icons.Default.Person, contentDescription = null, modifier = Modifier.size(80.dp))
-        Spacer(modifier = Modifier.height(16.dp))
-        Text("Iniciar Sesión", fontSize = 24.sp)
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        OutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
-            label = { Text("Correo") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
-            label = { Text("Contraseña") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-            visualTransformation = PasswordVisualTransformation()
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(
-            onClick = {
-                if (email.isNotBlank() && password.isNotBlank()) {
-                    viewModel.login(email, password) { usuario ->
-                        if (usuario != null) {
-                            Toast.makeText(context, "Bienvenido ${usuario.nombre}", Toast.LENGTH_SHORT).show()
-                            onLoginSuccess(usuario.rol.lowercase(Locale.ROOT))
-                        } else {
-                            Toast.makeText(context, "Credenciales inválidas", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                } else {
-                    Toast.makeText(context, "Completa todos los campos", Toast.LENGTH_SHORT).show()
-                }
-            },
-            modifier = Modifier.fillMaxWidth()
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.Center)
+                .background(Color.White, shape = RoundedCornerShape(16.dp))
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Iniciar sesión")
-        }
+            Icon(
+                Icons.Default.Person,
+                contentDescription = null,
+                modifier = Modifier.size(80.dp),
+                tint = Color(0xFF0D47A1)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                "Iniciar Sesión",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF0D47A1)
+            )
 
-        Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-        TextButton(onClick = { onRegisterClick() }) {
-            Text("¿No tienes cuenta? Regístrate")
-        }
+            OutlinedTextField(
+                value = email,
+                onValueChange = { email = it },
+                label = { Text("Correo") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+            )
 
-        TextButton(onClick = {
-            if (email.isNotBlank()) {
-                FirebaseAuth.getInstance()
-                    .sendPasswordResetEmail(email)
-                    .addOnSuccessListener {
-                        Toast.makeText(context, "Correo enviado", Toast.LENGTH_SHORT).show()
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedTextField(
+                value = password,
+                onValueChange = { password = it },
+                label = { Text("Contraseña") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                visualTransformation = PasswordVisualTransformation()
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Button(
+                onClick = {
+                    if (email.isNotBlank() && password.isNotBlank()) {
+                        viewModel.login(email, password) { usuario ->
+                            if (usuario != null) {
+                                Toast.makeText(context, "Bienvenido ${usuario.nombre}", Toast.LENGTH_SHORT).show()
+                                onLoginSuccess(usuario.rol.lowercase(Locale.ROOT))
+                            } else {
+                                Toast.makeText(context, "Credenciales inválidas", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    } else {
+                        Toast.makeText(context, "Completa todos los campos", Toast.LENGTH_SHORT).show()
                     }
-                    .addOnFailureListener {
-                        Toast.makeText(context, "Error: ${it.message}", Toast.LENGTH_SHORT).show()
-                    }
-            } else {
-                Toast.makeText(context, "Escribe tu correo", Toast.LENGTH_SHORT).show()
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D47A1))
+            ) {
+                Text("Iniciar sesión", color = Color.White)
             }
-        }) {
-            Text("¿Olvidaste tu contraseña?")
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            TextButton(onClick = { onRegisterClick() }) {
+                Text("¿No tienes cuenta? Regístrate", color = Color(0xFF0D47A1))
+            }
+
+            TextButton(onClick = {
+                if (email.isNotBlank()) {
+                    FirebaseAuth.getInstance()
+                        .sendPasswordResetEmail(email)
+                        .addOnSuccessListener {
+                            Toast.makeText(context, "Correo enviado", Toast.LENGTH_SHORT).show()
+                        }
+                        .addOnFailureListener {
+                            Toast.makeText(context, "Error: ${it.message}", Toast.LENGTH_SHORT).show()
+                        }
+                } else {
+                    Toast.makeText(context, "Escribe tu correo", Toast.LENGTH_SHORT).show()
+                }
+            }) {
+                Text("¿Olvidaste tu contraseña?", color = Color(0xFF0D47A1))
+            }
         }
     }
 }

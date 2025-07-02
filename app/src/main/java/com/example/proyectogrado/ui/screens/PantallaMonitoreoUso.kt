@@ -1,7 +1,8 @@
 package com.example.proyectogrado.ui.screens
 
 import android.app.DatePickerDialog
-import android.util.Log
+import android.util.Log // Asegúrate de tener esta importación
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -23,6 +24,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import java.text.SimpleDateFormat
 import java.util.*
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaMonitoreoUso(
     navController: NavController,
@@ -31,6 +33,7 @@ fun PantallaMonitoreoUso(
     val context = LocalContext.current
     val calendar = remember { Calendar.getInstance() }
     val dateFormat = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
+    val TAG_PANTALLA_MONITOREO = "MonitoreoUsoScreen" // Definir un TAG para esta pantalla
 
     var fechaSeleccionada by remember { mutableStateOf(dateFormat.format(calendar.time)) }
     var listaApps by remember { mutableStateOf<List<AppUso>>(emptyList()) }
@@ -52,10 +55,8 @@ fun PantallaMonitoreoUso(
         return mapa[nombrePaquete] ?: nombrePaquete.substringAfterLast('.').replaceFirstChar { it.uppercase() }
     }
 
-    // 🔍 Cargar estudiantes vinculados al padre
     LaunchedEffect(Unit) {
         val padreUid = FirebaseAuth.getInstance().currentUser?.uid
-        Log.d("DEBUG", "🔑 Padre actual: $padreUid")
         if (padreUid != null) {
             FirebaseFirestore.getInstance()
                 .collection("estudiantes")
@@ -63,97 +64,132 @@ fun PantallaMonitoreoUso(
                 .get()
                 .addOnSuccessListener { docs ->
                     if (!docs.isEmpty) {
-                        val ids = docs.mapNotNull { it.getString("id") }
+                        // APLICA .trim() AQUÍ para cada ID obtenido de Firebase
+                        val ids = docs.mapNotNull { it.getString("id")?.trim() }
                         estudiantesVinculados = ids
                         estudianteSeleccionado = ids.firstOrNull()
-                        Log.d("DEBUG", "👦 Estudiantes vinculados: $ids")
+                        Log.d(TAG_PANTALLA_MONITOREO, "Estudiantes vinculados cargados (trimed): $estudiantesVinculados. Seleccionado: '$estudianteSeleccionado'")
                     } else {
                         mensajeError = "❌ No hay estudiantes vinculados."
+                        Log.d(TAG_PANTALLA_MONITOREO, "No hay estudiantes vinculados para padreUid: $padreUid")
                     }
                 }
-                .addOnFailureListener {
+                .addOnFailureListener { e ->
                     mensajeError = "❌ Error al obtener estudiantes vinculados."
+                    Log.e(TAG_PANTALLA_MONITOREO, "Error al obtener estudiantes vinculados: ${e.message}", e)
                 }
+        } else {
+            Log.d(TAG_PANTALLA_MONITOREO, "Padre UID es nulo, no se pueden cargar estudiantes vinculados.")
         }
     }
 
-    // 🔁 Cargar datos de apps del estudiante seleccionado
     LaunchedEffect(fechaSeleccionada, estudianteSeleccionado) {
         if (!estudianteSeleccionado.isNullOrBlank()) {
+            // Aquí ya estudianteSeleccionado debería estar limpio si se cargó del LaunchedEffect(Unit)
+            Log.d(TAG_PANTALLA_MONITOREO, "Llamando a cargarDatos con Estudiante: '${estudianteSeleccionado}', Fecha: '${fechaSeleccionada}'")
             FirebaseFirestore.getInstance()
                 .collection("usoApps")
-                .document(estudianteSeleccionado!!)
+                .document(estudianteSeleccionado!!) // Usa el estudianteSeleccionado ya trimed
                 .collection(fechaSeleccionada)
                 .get()
                 .addOnSuccessListener { result ->
-                    val lista = result.mapNotNull { it.toObject(AppUso::class.java) }
-                    listaApps = lista
-                    Log.d("DEBUG", "📦 Apps cargadas: ${lista.size}")
+                    listaApps = result.mapNotNull { it.toObject(AppUso::class.java) }
+                    if (listaApps.isEmpty()) {
+                        Log.d(TAG_PANTALLA_MONITOREO, "No hay datos de uso para esta fecha y estudiante.")
+                    }
                 }
-                .addOnFailureListener {
-                    mensajeError = "❌ Error al cargar uso de apps"
+                .addOnFailureListener { e ->
+                    mensajeError = "❌ Error al cargar uso de apps: ${e.message}"
+                    Log.e(TAG_PANTALLA_MONITOREO, "Error al cargar uso de apps: ${e.message}", e)
                 }
+        } else {
+            Log.d(TAG_PANTALLA_MONITOREO, "No se puede cargar datos: Estudiante seleccionado es nulo o vacío.")
+            listaApps = emptyList() // Limpiar la lista si no hay estudiante válido
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        Text("Monitoreo de Uso de Aplicaciones", style = MaterialTheme.typography.headlineSmall)
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFFECEFF1))
+            .padding(16.dp)
+    ) {
+        Text(
+            "📊 Monitoreo de Uso de Aplicaciones",
+            style = MaterialTheme.typography.headlineSmall,
+            color = Color(0xFF263238)
+        )
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 🔽 Menú de selección de estudiante
         if (estudiantesVinculados.size > 1) {
             var expanded by remember { mutableStateOf(false) }
 
-            Text("Selecciona el estudiante:")
+            Text("👦 Selecciona el estudiante:", color = Color(0xFF37474F))
             Box {
-                Button(onClick = { expanded = true }) {
-                    Text(estudianteSeleccionado ?: "Seleccionar")
+                Button(
+                    onClick = { expanded = true },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF455A64))
+                ) {
+                    Text(estudianteSeleccionado ?: "Seleccionar", color = Color.White)
                 }
                 DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                     estudiantesVinculados.forEach { id ->
                         DropdownMenuItem(
                             text = { Text(id) },
                             onClick = {
-                                estudianteSeleccionado = id
+                                // APLICA .trim() AQUÍ también para IDs seleccionados del menú, por si acaso
+                                estudianteSeleccionado = id.trim()
                                 expanded = false
+                                Log.d(TAG_PANTALLA_MONITOREO, "Estudiante seleccionado por Dropdown (trimed): '$estudianteSeleccionado'")
                             }
                         )
                     }
                 }
             }
-
+            Spacer(modifier = Modifier.height(16.dp))
+        } else if (estudiantesVinculados.size == 1) {
+            Text("Estudiante vinculado: ${estudianteSeleccionado ?: "Cargando..."}", color = Color(0xFF37474F))
             Spacer(modifier = Modifier.height(16.dp))
         }
 
-        // 🗓️ Botón para seleccionar fecha
-        Button(onClick = {
-            DatePickerDialog(
-                context,
-                { _, year, month, day ->
-                    val fecha = Calendar.getInstance().apply {
-                        set(year, month, day)
-                    }
-                    fechaSeleccionada = dateFormat.format(fecha.time)
-                },
-                calendar.get(Calendar.YEAR),
-                calendar.get(Calendar.MONTH),
-                calendar.get(Calendar.DAY_OF_MONTH)
-            ).show()
-        }) {
-            Text("Filtrar por fecha")
+
+        Button(
+            onClick = {
+                // Usa el calendario actual para el DatePickerDialog para que se abra en la fecha ya seleccionada
+                // o en el día actual si no se ha seleccionado nada.
+                DatePickerDialog(
+                    context,
+                    { _, year, month, day ->
+                        val fecha = Calendar.getInstance().apply {
+                            set(year, month, day)
+                        }
+                        fechaSeleccionada = dateFormat.format(fecha.time)
+                        // Log para verificar el formato de la fecha
+                        Log.d(TAG_PANTALLA_MONITOREO, "Fecha seleccionada del DatePicker: '$fechaSeleccionada'")
+                    },
+                    calendar.get(Calendar.YEAR),
+                    calendar.get(Calendar.MONTH),
+                    calendar.get(Calendar.DAY_OF_MONTH)
+                ).show()
+            },
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1976D2))
+        ) {
+            Text("📅 Filtrar por fecha", color = Color.White)
         }
 
         Spacer(modifier = Modifier.height(8.dp))
-        Text("Fecha seleccionada: $fechaSeleccionada", fontSize = 14.sp)
+        Text("📆 Fecha seleccionada: $fechaSeleccionada", fontSize = 14.sp, color = Color(0xFF546E7A))
         Spacer(modifier = Modifier.height(16.dp))
 
-        if (mensajeError != null) {
-            Text(mensajeError!!, color = Color.Red)
+        mensajeError?.let {
+            Text(it, color = Color.Red)
         }
 
-        if (listaApps.isEmpty() && mensajeError == null) {
-            Text("⚠️ No hay datos de uso para esta fecha", color = Color.Gray)
+        // Mensaje más claro si no hay datos
+        if (listaApps.isEmpty() && mensajeError == null && !estudianteSeleccionado.isNullOrBlank()) {
+            Text("⚠️ No hay datos de uso para esta fecha y estudiante. Verifique su selección o los datos en Firebase.", color = Color.Gray)
         }
+
 
         LazyColumn(modifier = Modifier.weight(1f)) {
             items(listaApps) { app ->
@@ -162,7 +198,7 @@ fun PantallaMonitoreoUso(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 4.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5))
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFCFD8DC))
                 ) {
                     Row(
                         modifier = Modifier
@@ -173,13 +209,13 @@ fun PantallaMonitoreoUso(
                         Icon(
                             imageVector = Icons.Default.Apps,
                             contentDescription = null,
-                            tint = Color.Gray,
+                            tint = Color(0xFF37474F),
                             modifier = Modifier.size(24.dp)
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
-                            Text(text = nombreBonito, fontWeight = FontWeight.Medium)
-                            Text(text = "Tiempo usado: ${app.tiempoMin} min", fontSize = 12.sp)
+                            Text(text = nombreBonito, fontWeight = FontWeight.SemiBold, color = Color(0xFF263238))
+                            Text(text = "Tiempo usado: ${app.tiempoMin} min", fontSize = 12.sp, color = Color(0xFF546E7A))
                         }
                     }
                 }
@@ -188,11 +224,14 @@ fun PantallaMonitoreoUso(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+
+
         Button(
             onClick = { navController.popBackStack() },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF546E7A))
         ) {
-            Text("Volver")
+            Text("🔙 Volver", color = Color.White)
         }
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -203,9 +242,9 @@ fun PantallaMonitoreoUso(
                 onLogout()
             },
             modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F))
         ) {
-            Text("Cerrar sesión", color = Color.White)
+            Text("🔒 Cerrar sesión", color = Color.White)
         }
     }
 }

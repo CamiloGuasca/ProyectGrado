@@ -1,9 +1,12 @@
 package com.example.proyectogrado.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.* // Importa todos los componentes de Material 3
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -11,12 +14,12 @@ import androidx.navigation.NavHostController
 import com.example.proyectogrado.ui.navigation.Screen
 import com.example.proyectogrado.viewmodel.ProfesorMenuViewModel
 
-@OptIn(ExperimentalMaterial3Api::class) // Necesario para TopAppBar
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaProfesorMenu(
     navController: NavHostController,
     CrearCurso: () -> Unit,
-    MisCursos: () -> Unit, // Este callback ya estaba, lo renombramos por claridad en la UI
+    MisCursos: () -> Unit,
     onLogout: () -> Unit,
     viewModel: ProfesorMenuViewModel = viewModel()
 ) {
@@ -31,72 +34,85 @@ fun PantallaProfesorMenu(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Menú del Profesor") } // Título de la barra superior
+                title = {
+                    Text(
+                        text = "Menú del Profesor",
+                        color = Color.White
+                    )
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFF263238)
+                )
             )
-        }
+        },
+        containerColor = Color(0xFFECEFF1)
     ) { paddingValues ->
         if (rolValido) {
             Column(
                 modifier = Modifier
-                    .fillMaxSize() // Ocupa todo el espacio disponible
-                    .padding(paddingValues) // Aplica el padding del Scaffold
-                    .padding(16.dp), // Padding adicional para el contenido
-                verticalArrangement = Arrangement.Center, // Centra los elementos verticalmente
-                horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally // Centra los elementos horizontalmente
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(24.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Bienvenido Profesor",
-                    style = MaterialTheme.typography.headlineLarge, // Un título más grande y prominente
-                    modifier = Modifier.padding(bottom = 24.dp) // Más espacio debajo del título
+                    text = "👨‍🏫 Bienvenido, Profesor",
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = Color(0xFF263238),
+                    modifier = Modifier.padding(bottom = 32.dp)
                 )
-                /*
-                Button(
-                    onClick = CrearCurso, // Este botón debería ser para "Crear Nuevo Curso" según tu uso anterior
-                    modifier = Modifier.fillMaxWidth(0.8f) // Ocupa el 80% del ancho
-                ) {
-                    Text("Crear Nuevo Curso")
-                }*/
-                Spacer(modifier = Modifier.height(16.dp)) // Espacio entre botones
 
                 Button(
-                    onClick = MisCursos, // Este botón es para "Mis Cursos"
-                    modifier = Modifier.fillMaxWidth(0.8f)
+                    onClick = MisCursos,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF455A64))
                 ) {
-                    Text("Ver Mis Cursos")
+                    Text("📚 Ver Mis Cursos", color = Color.White)
                 }
+
+                Button(
+                    onClick = CrearCurso,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF607D8B))
+                ) {
+                    Text("➕ Crear Nuevo Curso", color = Color.White)
+                }
+
                 Button(
                     onClick = { navController.navigate(Screen.PerfilUsuario.route) },
-                    modifier = Modifier.fillMaxWidth().padding(8.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF90A4AE))
                 ) {
-                    Text("Mi Perfil")
+                    Text("👤 Mi Perfil", color = Color.White)
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Aquí podrías añadir un botón para "Monitorear uso de apps" si lo necesitas,
-                // usando el callback que tenías antes.
-                // Button(onClick = { /* onMonitorear() */ }) {
-                //    Text("Monitorear Uso de Apps")
-                // }
-                // Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(32.dp))
 
                 Button(
                     onClick = onLogout,
-                    modifier = Modifier.fillMaxWidth(0.8f),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error) // Botón de cerrar sesión en rojo
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Text("Cerrar Sesión")
+                    Text("🚪 Cerrar Sesión", color = Color.White)
                 }
             }
         } else if (mensaje.isNotEmpty()) {
-            // Muestra el mensaje de error o cargando
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .padding(16.dp),
+                    .padding(24.dp),
                 verticalArrangement = Arrangement.Center,
-                horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(mensaje, color = MaterialTheme.colorScheme.error)
             }

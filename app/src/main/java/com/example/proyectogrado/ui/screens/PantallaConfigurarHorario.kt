@@ -2,6 +2,7 @@
 package com.example.proyectogrado.ui.screens
 
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -21,6 +22,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack // Necesario para el TopAppBar si lo usas
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,61 +42,57 @@ fun PantallaConfigurarHorario(
     val aplicacionesSeleccionadas = remember { mutableStateListOf<String>() }
 
     val horarioEnEdicion by viewModel.horarioEnEdicion.collectAsState()
+    val scrollState = rememberScrollState()
 
-    // Para la lista de aplicaciones disponibles
     val aplicacionesDisponiblesConNombres = remember {
         listOf(
-            Pair("com.whatsapp", "WhatsApp"),
-            Pair("com.facebook.katana", "Facebook"),
-            Pair("com.google.android.youtube", "YouTube"),
-            Pair("com.instagram.android", "Instagram"),
-            Pair("com.tiktok.android", "TikTok"),
-            Pair("com.twitter.android", "X (Twitter)"),
-            Pair("com.snapchat.android", "Snapchat"),
-            Pair("com.netflix.mediaclient", "Netflix"),
-            Pair("com.rovio.angrybirds", "Angry Birds (Ejemplo)"),
-            Pair("com.supercell.clashofclans", "Clash of Clans (Ejemplo)")
+            "com.whatsapp" to "WhatsApp",
+            "com.facebook.katana" to "Facebook",
+            "com.google.android.youtube" to "YouTube",
+            "com.instagram.android" to "Instagram",
+            "com.tiktok.android" to "TikTok",
+            "com.twitter.android" to "X (Twitter)",
+            "com.snapchat.android" to "Snapchat",
+            "com.netflix.mediaclient" to "Netflix",
+            "com.rovio.angrybirds" to "Angry Birds",
+            "com.supercell.clashofclans" to "Clash of Clans"
         )
     }
 
     LaunchedEffect(horarioId) {
-        if (horarioId != null) {
-            viewModel.cargarHorarioParaEdicion(idEstudiante, horarioId)
-        } else {
-            viewModel.limpiarHorarioEnEdicion()
-        }
+        if (horarioId != null) viewModel.cargarHorarioParaEdicion(idEstudiante, horarioId)
+        else viewModel.limpiarHorarioEnEdicion()
     }
 
     LaunchedEffect(horarioEnEdicion) {
-        horarioEnEdicion?.let { horario ->
-            nombreHorario = horario.nombreHorario
-            horaInicio = horario.horaInicio
-            horaFin = horario.horaFin
-            tiempoMaximo = horario.tiempoMaximoMinutos.toString()
+        horarioEnEdicion?.let {
+            nombreHorario = it.nombreHorario
+            horaInicio = it.horaInicio
+            horaFin = it.horaFin
+            tiempoMaximo = it.tiempoMaximoMinutos.toString()
             aplicacionesSeleccionadas.clear()
-            aplicacionesSeleccionadas.addAll(horario.aplicacionesRestringidas)
-        } ?: run {
-            if (horarioId == null) {
-                nombreHorario = ""
-                horaInicio = ""
-                horaFin = ""
-                tiempoMaximo = "0"
-                aplicacionesSeleccionadas.clear()
-            }
+            aplicacionesSeleccionadas.addAll(it.aplicacionesRestringidas)
         }
     }
-
-    val scrollState = rememberScrollState() // <--- ESTO ES NUEVO: Estado del scroll
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (horarioId == null) "Crear Nuevo Horario" else "Editar Horario") },
+                title = {
+                    Text(
+                        if (horarioId == null) "Crear Nuevo Horario" else "Editar Horario",
+                        color = Color.White
+                    )
+                },
                 navigationIcon = {
-                    IconButton(onClick = onVolver) { // Usa onVolver para el botón de retroceso
-                        Icon(Icons.Filled.ArrowBack, "Volver")
+                    IconButton(onClick = onVolver) {
+                        Icon(Icons.Filled.ArrowBack, "Volver", tint = Color.White)
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFF0D47A1)
+                )
+
             )
         }
     ) { paddingValues ->
@@ -101,30 +100,27 @@ fun PantallaConfigurarHorario(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp)
-                .verticalScroll(scrollState), // <--- ESTO ES NUEVO: Habilita el scroll
-            verticalArrangement = Arrangement.spacedBy(12.dp) // Mantén el espaciado entre elementos
+                .background(Color(0xFFF0F4F8))
+                .verticalScroll(scrollState)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = if (horarioId == null) "Crear Nuevo Horario para ${idEstudiante.take(8)}..."
-                else "Editar Horario para ${idEstudiante.take(8)}...",
-                style = MaterialTheme.typography.headlineSmall
+                text = if (horarioId == null) "Configuración para ${idEstudiante.take(8)}..." else "Edición de horario",
+                style = MaterialTheme.typography.headlineSmall,
+                color = Color(0xFF0D47A1)
             )
-            Spacer(modifier = Modifier.height(8.dp))
 
             OutlinedTextField(
                 value = nombreHorario,
                 onValueChange = { nombreHorario = it },
-                label = { Text("Nombre del Horario (ej: Juegos Tarde)") },
+                label = { Text("Nombre del Horario") },
                 modifier = Modifier.fillMaxWidth()
             )
-            Spacer(modifier = Modifier.height(8.dp))
 
             OutlinedTextField(
                 value = horaInicio,
-                onValueChange = { newValue ->
-                    horaInicio = newValue
-                },
+                onValueChange = { horaInicio = it },
                 label = { Text("Hora de inicio (ej: 08:00)") },
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
@@ -132,9 +128,7 @@ fun PantallaConfigurarHorario(
 
             OutlinedTextField(
                 value = horaFin,
-                onValueChange = { newValue ->
-                    horaFin = newValue
-                },
+                onValueChange = { horaFin = it },
                 label = { Text("Hora de fin (ej: 21:00)") },
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
@@ -142,68 +136,54 @@ fun PantallaConfigurarHorario(
 
             OutlinedTextField(
                 value = tiempoMaximo,
-                onValueChange = { newValue ->
-                    tiempoMaximo = newValue.filter { it.isDigit() }
-                },
-                label = { Text("Tiempo máximo de uso (minutos, 0 para bloqueo total)") },
+                onValueChange = { tiempoMaximo = it.filter { it.isDigit() } },
+                label = { Text("Tiempo máximo (minutos)") },
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(text = "Selecciona aplicaciones a restringir en este horario:", style = MaterialTheme.typography.titleMedium)
+            Text("Aplicaciones restringidas:", style = MaterialTheme.typography.titleMedium)
 
             aplicacionesDisponiblesConNombres.forEach { (packageName, appName) ->
-                val isChecked = aplicacionesSeleccionadas.contains(packageName)
+                val checked = aplicacionesSeleccionadas.contains(packageName)
                 Row(
+                    verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable {
-                            if (isChecked) aplicacionesSeleccionadas.remove(packageName)
+                            if (checked) aplicacionesSeleccionadas.remove(packageName)
                             else aplicacionesSeleccionadas.add(packageName)
                         }
-                        .padding(vertical = 4.dp),
-                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                        .padding(vertical = 4.dp)
                 ) {
                     Checkbox(
-                        checked = isChecked,
-                        onCheckedChange = { isSelected ->
-                            if (isSelected) aplicacionesSeleccionadas.add(packageName)
+                        checked = checked,
+                        onCheckedChange = {
+                            if (it) aplicacionesSeleccionadas.add(packageName)
                             else aplicacionesSeleccionadas.remove(packageName)
                         }
                     )
-                    Text(text = appName, style = MaterialTheme.typography.bodyLarge)
+                    Text(appName)
                 }
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
 
             Button(
                 onClick = {
                     if (nombreHorario.isBlank() || horaInicio.isBlank() || horaFin.isBlank() || tiempoMaximo.isBlank()) {
-                        Toast.makeText(context, "⚠️ Completa todos los campos del horario", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Completa todos los campos", Toast.LENGTH_SHORT).show()
                         return@Button
                     }
 
-                    val horaRegex = Regex("^([01]?[0-9]|2[0-3]):[0-5][0-9]$") // Regex para HH:MM (00:00 a 23:59)
-                    if (!horaInicio.matches(horaRegex)) {
-                        Toast.makeText(context, "⚠️ Formato de 'Hora de inicio' incorrecto (ej: 08:00)", Toast.LENGTH_LONG).show()
-                        return@Button
-                    }
-                    if (!horaFin.matches(horaRegex)) {
-                        Toast.makeText(context, "⚠️ Formato de 'Hora de fin' incorrecto (ej: 21:00)", Toast.LENGTH_LONG).show()
+                    val horaRegex = Regex("^([01]?[0-9]|2[0-3]):[0-5][0-9]$")
+                    if (!horaInicio.matches(horaRegex) || !horaFin.matches(horaRegex)) {
+                        Toast.makeText(context, "Formato de hora inválido (usa HH:mm)", Toast.LENGTH_SHORT).show()
                         return@Button
                     }
 
-                    val maxTiempoInt = tiempoMaximo.toIntOrNull()
-                    if (maxTiempoInt == null || maxTiempoInt < 0) {
-                        Toast.makeText(context, "⚠️ Tiempo máximo debe ser un número válido y no negativo", Toast.LENGTH_SHORT).show()
-                        return@Button
-                    }
+                    val tiempo = tiempoMaximo.toIntOrNull() ?: return@Button
 
                     if (aplicacionesSeleccionadas.isEmpty()) {
-                        Toast.makeText(context, "⚠️ Selecciona al menos una aplicación para restringir en este horario.", Toast.LENGTH_LONG).show()
+                        Toast.makeText(context, "Selecciona al menos una app", Toast.LENGTH_SHORT).show()
                         return@Button
                     }
 
@@ -212,29 +192,30 @@ fun PantallaConfigurarHorario(
                         nombreHorario = nombreHorario,
                         horaInicio = horaInicio,
                         horaFin = horaFin,
-                        tiempoMaximoMinutos = maxTiempoInt,
+                        tiempoMaximoMinutos = tiempo,
                         aplicacionesRestringidas = aplicacionesSeleccionadas.toList()
                     )
 
-                    viewModel.guardarHorario(idEstudiante, horario) { exito ->
-                        if (exito) {
-                            Toast.makeText(context, "✅ Horario '${nombreHorario}' guardado", Toast.LENGTH_SHORT).show()
+                    viewModel.guardarHorario(idEstudiante, horario) {
+                        if (it) {
+                            Toast.makeText(context, "Horario guardado", Toast.LENGTH_SHORT).show()
                             onVolver()
                         } else {
-                            Toast.makeText(context, "❌ Error al guardar el horario '${nombreHorario}'", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Error al guardar", Toast.LENGTH_SHORT).show()
                         }
                     }
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D47A1))
             ) {
-                Text(if (horarioId == null) "Crear Nuevo Horario" else "Guardar Cambios")
+                Text(if (horarioId == null) "Crear Horario" else "Guardar Cambios", color = Color.White)
             }
 
             OutlinedButton(
                 onClick = onVolver,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Volver")
+                Text("Cancelar")
             }
         }
     }

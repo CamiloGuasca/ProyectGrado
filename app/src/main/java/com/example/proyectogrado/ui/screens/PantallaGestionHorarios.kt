@@ -1,8 +1,7 @@
-// app/src/main/java/com/example/proyectogrado/ui/screens/PantallaGestionHorarios.kt
 package com.example.proyectogrado.ui.screens
 
 import android.widget.Toast
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -15,12 +14,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.material.icons.filled.ArrowBack // <--- ¡Asegúrate de que esta línea esté presente!
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.proyectogrado.domain.model.HorarioUso
 import com.example.proyectogrado.viewmodel.HorarioUsoViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -36,9 +34,8 @@ fun PantallaGestionHorarios(
     val context = LocalContext.current
     val horarios by viewModel.horarios.collectAsState()
 
-    // Este es el cambio clave: llamar a cargarHorarios en lugar de iniciarEscuchaHorarios
     LaunchedEffect(idEstudiante) {
-        viewModel.cargarHorarios(idEstudiante) // <-- CORRECCIÓN AQUÍ
+        viewModel.cargarHorarios(idEstudiante)
     }
 
     Scaffold(
@@ -47,12 +44,12 @@ fun PantallaGestionHorarios(
                 title = { Text("Horarios de ${nombreEstudiante ?: "Estudiante"}") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Filled.ArrowBack, "Volver")
+                        Icon(Icons.Filled.ArrowBack, contentDescription = "Volver")
                     }
                 },
                 actions = {
                     IconButton(onClick = { onAddHorario(idEstudiante) }) {
-                        Icon(Icons.Filled.Add, "Agregar Horario")
+                        Icon(Icons.Filled.Add, contentDescription = "Agregar Horario")
                     }
                 }
             )
@@ -62,26 +59,28 @@ fun PantallaGestionHorarios(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = 16.dp),
+                .padding(16.dp)
+                .background(Color(0xFFF0F4F8)),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             if (horarios.isEmpty()) {
                 Text(
                     text = "No hay horarios configurados para este estudiante.",
                     style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(top = 32.dp)
+                    modifier = Modifier.padding(top = 32.dp),
+                    color = Color.Gray
                 )
             } else {
                 LazyColumn(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                     contentPadding = PaddingValues(vertical = 16.dp)
                 ) {
                     items(horarios, key = { it.id }) { horario ->
                         Card(
-                            modifier = Modifier
-                                .fillMaxWidth(),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            elevation = CardDefaults.cardElevation(4.dp)
                         ) {
                             Row(
                                 modifier = Modifier
@@ -92,47 +91,32 @@ fun PantallaGestionHorarios(
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
-                                        text = horario.nombreHorario,
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontSize = 18.sp
+                                        text = "📆 ${horario.nombreHorario}",
+                                        style = MaterialTheme.typography.titleMedium.copy(fontSize = 18.sp)
                                     )
                                     Spacer(modifier = Modifier.height(4.dp))
+                                    Text("🕒 Horario: ${horario.horaInicio} - ${horario.horaFin}")
+                                    Text("⏱️ Máx. uso: ${horario.tiempoMaximoMinutos} min ${if (horario.tiempoMaximoMinutos == 0) "(Bloqueo Total)" else ""}")
                                     Text(
-                                        text = "Horario: ${horario.horaInicio} - ${horario.horaFin}",
-                                        style = MaterialTheme.typography.bodyMedium
+                                        text = "📱 Apps: ${if (horario.aplicacionesRestringidas.isEmpty()) "Ninguna" else horario.aplicacionesRestringidas.joinToString { it.substringAfterLast('.') }}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
-                                    Text(
-                                        text = "Max. Uso: ${horario.tiempoMaximoMinutos} min (${if (horario.tiempoMaximoMinutos == 0) "Bloqueo Total" else ""})",
-                                        style = MaterialTheme.typography.bodySmall
-                                    )
-                                    if (horario.aplicacionesRestringidas.isNotEmpty()) {
-                                        Text(
-                                            text = "Apps: ${horario.aplicacionesRestringidas.joinToString { it.substringAfterLast('.') }}", // Muestra solo el nombre de la app
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    } else {
-                                        Text(
-                                            text = "Apps: Ninguna",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
                                 }
-                                Column {
+                                Column(horizontalAlignment = Alignment.End) {
                                     IconButton(onClick = { onEditHorario(idEstudiante, horario.id) }) {
-                                        Icon(Icons.Filled.Edit, "Editar Horario")
+                                        Icon(Icons.Filled.Edit, contentDescription = "Editar Horario")
                                     }
                                     IconButton(onClick = {
                                         viewModel.eliminarHorario(idEstudiante, horario.id) { exito ->
                                             if (exito) {
-                                                Toast.makeText(context, "Horario eliminado", Toast.LENGTH_SHORT).show()
+                                                Toast.makeText(context, "✅ Horario eliminado", Toast.LENGTH_SHORT).show()
                                             } else {
-                                                Toast.makeText(context, "Error al eliminar horario", Toast.LENGTH_SHORT).show()
+                                                Toast.makeText(context, "❌ Error al eliminar horario", Toast.LENGTH_SHORT).show()
                                             }
                                         }
                                     }) {
-                                        Icon(Icons.Filled.Delete, "Eliminar Horario", tint = MaterialTheme.colorScheme.error)
+                                        Icon(Icons.Filled.Delete, contentDescription = "Eliminar Horario", tint = MaterialTheme.colorScheme.error)
                                     }
                                 }
                             }

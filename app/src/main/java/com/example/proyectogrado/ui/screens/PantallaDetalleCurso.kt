@@ -20,36 +20,31 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.proyectogrado.domain.model.Curso
-import com.example.proyectogrado.domain.model.Estudiante // ¡IMPORTANTE! Asegúrate de importar Estudiante aquí
+import com.example.proyectogrado.domain.model.Estudiante
 import com.example.proyectogrado.viewmodel.CursoViewModel
-import com.example.proyectogrado.viewmodel.VinculacionViewModel // Asumiendo que usas este ViewModel para obtener estudiantes disponibles
+import com.example.proyectogrado.viewmodel.VinculacionViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaDetalleCurso(
     idCurso: String,
     cursoViewModel: CursoViewModel,
-    vinculacionViewModel: VinculacionViewModel, // Para la lista de estudiantes disponibles
+    vinculacionViewModel: VinculacionViewModel,
     onBack: () -> Unit,
-    DetalleEstudiante: (String) -> Unit // Recibe el ID del estudiante
+    DetalleEstudiante: (String) -> Unit
 ) {
     val context = LocalContext.current
-    val curso by cursoViewModel.cursoSeleccionado.collectAsState() // Esto solo para mostrar detalles básicos del curso
-    val estudiantesDelCursoUI by cursoViewModel.estudiantesEnCursoUI.collectAsState() // ¡NUEVO! Lista de objetos Estudiante completos
+    val curso by cursoViewModel.cursoSeleccionado.collectAsState()
+    val estudiantesDelCursoUI by cursoViewModel.estudiantesEnCursoUI.collectAsState()
     val operacionExitosa by cursoViewModel.operacionExitosa.collectAsState()
 
     var searchText by remember { mutableStateOf("") }
 
-    // Filtra la lista de Estudiante (que ahora contiene ID y Nombre)
     val filteredEstudiantesInCourse = remember(estudiantesDelCursoUI, searchText) {
-        if (searchText.isBlank()) {
-            estudiantesDelCursoUI
-        } else {
-            val lowerCaseSearchText = searchText.lowercase()
-            estudiantesDelCursoUI.filter { estudiante ->
-                estudiante.nombre.lowercase().contains(lowerCaseSearchText) ||
-                        estudiante.id.lowercase().contains(lowerCaseSearchText)
-            }
+        if (searchText.isBlank()) estudiantesDelCursoUI
+        else estudiantesDelCursoUI.filter {
+            it.nombre.contains(searchText, ignoreCase = true) ||
+                    it.id.contains(searchText, ignoreCase = true)
         }
     }
 
@@ -57,39 +52,30 @@ fun PantallaDetalleCurso(
     var showEditNameDialog by remember { mutableStateOf(false) }
     var showAddStudentDialog by remember { mutableStateOf(false) }
     var nuevoNombreCurso by remember { mutableStateOf("") }
-
     var addStudentSearchText by remember { mutableStateOf("") }
-    val availableStudents by vinculacionViewModel.estudiantes.collectAsState() // Lista de todos los estudiantes del sistema
+    val availableStudents by vinculacionViewModel.estudiantes.collectAsState()
 
     val filteredAvailableStudents = remember(availableStudents, addStudentSearchText, estudiantesDelCursoUI) {
-        val lowerCaseSearchText = addStudentSearchText.lowercase()
-        availableStudents.filter { estudiante ->
-            // Verifica si el estudiante NO está ya en la lista de estudiantes del curso (por ID)
-            val isAlreadyInCourse = estudiantesDelCursoUI.any { it.id == estudiante.id }
-            (!isAlreadyInCourse) && (estudiante.nombre.lowercase().contains(lowerCaseSearchText) || estudiante.id.lowercase().contains(lowerCaseSearchText))
+        availableStudents.filter {
+            !estudiantesDelCursoUI.any { e -> e.id == it.id } &&
+                    (it.nombre.contains(addStudentSearchText, ignoreCase = true) ||
+                            it.id.contains(addStudentSearchText, ignoreCase = true))
         }
     }
 
     LaunchedEffect(operacionExitosa) {
         operacionExitosa?.let { success ->
-            if (success) {
-                Toast.makeText(context, "Operación exitosa", Toast.LENGTH_SHORT).show()
-                // El VM ya se encarga de recargar si es necesario.
-            } else {
-                Toast.makeText(context, "Operación fallida", Toast.LENGTH_SHORT).show()
-            }
+            Toast.makeText(context, if (success) "Operación exitosa" else "Operación fallida", Toast.LENGTH_SHORT).show()
             cursoViewModel.resetOperacionExitosaEstado()
         }
     }
 
     LaunchedEffect(idCurso) {
-        // Al cargar el curso, el ViewModel también preparará la lista de estudiantes para la UI
         cursoViewModel.cargarCursoPorId(idCurso)
-        Log.d("DETALLE_CURSO", "Cargando curso con ID: $idCurso")
     }
 
     LaunchedEffect(Unit) {
-        vinculacionViewModel.obtenerEstudiantes() // Necesario para el diálogo de añadir estudiantes
+        vinculacionViewModel.obtenerEstudiantes()
     }
 
     Scaffold(
@@ -128,61 +114,32 @@ fun PantallaDetalleCurso(
                 .padding(16.dp)
         ) {
             curso?.let { currentCurso ->
-                Text(
-                    text = "Detalles del Curso: ${currentCurso.nombreCurso}",
-                    style = MaterialTheme.typography.headlineMedium,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
-                Text(
-                    text = "ID del Curso: ${currentCurso.idCurso}",
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-                Text(
-                    text = "Profesor ID: ${currentCurso.profesor}", // Podrías convertir también este ID a nombre si lo necesitas
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-                Divider(modifier = Modifier.padding(vertical = 8.dp))
+                Text("Detalles del Curso: ${currentCurso.nombreCurso}", style = MaterialTheme.typography.headlineMedium)
+                Spacer(modifier = Modifier.height(8.dp))
+                Text("ID del Curso: ${currentCurso.idCurso}", style = MaterialTheme.typography.bodyLarge)
+                Text("Profesor ID: ${currentCurso.profesor}", style = MaterialTheme.typography.bodyLarge)
 
                 OutlinedTextField(
                     value = searchText,
                     onValueChange = { searchText = it },
                     label = { Text("Buscar estudiante en curso") },
-                    leadingIcon = { Icon(Icons.Filled.Search, contentDescription = "Buscar") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 16.dp)
+                    leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+                    modifier = Modifier.fillMaxWidth()
                 )
 
-                Text(
-                    text = "Estudiantes Inscritos (${filteredEstudiantesInCourse.size} de ${estudiantesDelCursoUI.size}):",
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
+                Spacer(modifier = Modifier.height(8.dp))
 
-                if (filteredEstudiantesInCourse.isEmpty() && searchText.isNotBlank()) {
-                    Text("No se encontraron estudiantes con ese nombre o ID en este curso.", style = MaterialTheme.typography.bodyMedium)
-                } else if (filteredEstudiantesInCourse.isEmpty() && searchText.isBlank()) {
-                    Text("Este curso no tiene estudiantes inscritos aún.", style = MaterialTheme.typography.bodyMedium)
-                }
-                else {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(filteredEstudiantesInCourse) { estudiante -> // ¡Ahora 'estudiante' es un objeto Estudiante completo!
+                if (filteredEstudiantesInCourse.isEmpty()) {
+                    Text("No hay estudiantes en el curso.")
+                } else {
+                    LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(filteredEstudiantesInCourse) { estudiante ->
                             Card(modifier = Modifier.fillMaxWidth()) {
                                 Column(modifier = Modifier.padding(16.dp)) {
-                                    Text(text = estudiante.nombre, style = MaterialTheme.typography.titleMedium) // Mostramos el nombre
-                                    Text(text = "ID: ${estudiante.id}", style = MaterialTheme.typography.bodySmall) // También podemos mostrar el ID
+                                    Text(estudiante.nombre, style = MaterialTheme.typography.titleMedium)
+                                    Text("ID: ${estudiante.id}", style = MaterialTheme.typography.bodySmall)
                                     Spacer(modifier = Modifier.height(8.dp))
-                                    Button(
-                                        onClick = {
-                                            DetalleEstudiante(estudiante.id) // ¡Pasamos el ID correcto!
-                                        },
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
+                                    Button(onClick = { DetalleEstudiante(estudiante.id) }, modifier = Modifier.fillMaxWidth()) {
                                         Text("Consultar Estudiante")
                                     }
                                 }
@@ -190,29 +147,21 @@ fun PantallaDetalleCurso(
                         }
                     }
                 }
-            } ?: run {
-                Text("Curso no encontrado o cargando...", modifier = Modifier.fillMaxWidth(), style = MaterialTheme.typography.bodyLarge)
-            }
+            } ?: Text("Cargando curso...")
         }
     }
 
-    // --- DIÁLOGOS DE EDICIÓN ---
     if (showDeleteDialog && curso != null) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
             title = { Text("Eliminar Curso") },
-            text = { Text("¿Estás seguro de que quieres eliminar el curso '${curso?.nombreCurso}'?") },
+            text = { Text("Confirma eliminar el curso '\${curso?.nombreCurso}'?") },
             confirmButton = {
                 Button(onClick = {
-                    cursoViewModel.eliminarCurso(idCurso) { success ->
-                        if (success) {
-                            Toast.makeText(context, "Curso eliminado.", Toast.LENGTH_SHORT).show()
-                            onBack() // Volver a la pantalla anterior si se elimina con éxito
-                        } else {
-                            Toast.makeText(context, "Error al eliminar curso.", Toast.LENGTH_SHORT).show()
-                        }
-                        showDeleteDialog = false
+                    cursoViewModel.eliminarCurso(idCurso) {
+                        if (it) onBack()
                     }
+                    showDeleteDialog = false
                 }) {
                     Text("Eliminar")
                 }
@@ -228,29 +177,20 @@ fun PantallaDetalleCurso(
     if (showEditNameDialog && curso != null) {
         AlertDialog(
             onDismissRequest = { showEditNameDialog = false },
-            title = { Text("Cambiar Nombre del Curso") },
+            title = { Text("Cambiar nombre del curso") },
             text = {
                 OutlinedTextField(
                     value = nuevoNombreCurso,
                     onValueChange = { nuevoNombreCurso = it },
-                    label = { Text("Nuevo nombre del curso") },
-                    singleLine = true,
+                    label = { Text("Nuevo nombre") },
                     modifier = Modifier.fillMaxWidth()
                 )
             },
             confirmButton = {
                 Button(onClick = {
                     if (nuevoNombreCurso.isNotBlank()) {
-                        cursoViewModel.actualizarNombreCurso(idCurso, nuevoNombreCurso) { success ->
-                            if (success) {
-                                Toast.makeText(context, "Nombre del curso actualizado.", Toast.LENGTH_SHORT).show()
-                            } else {
-                                Toast.makeText(context, "Error al actualizar el nombre.", Toast.LENGTH_SHORT).show()
-                            }
-                            showEditNameDialog = false
-                        }
-                    } else {
-                        Toast.makeText(context, "El nombre no puede estar vacío", Toast.LENGTH_SHORT).show()
+                        cursoViewModel.actualizarNombreCurso(idCurso, nuevoNombreCurso) {}
+                        showEditNameDialog = false
                     }
                 }) {
                     Text("Guardar")
@@ -264,7 +204,6 @@ fun PantallaDetalleCurso(
         )
     }
 
-    // --- DIÁLOGO PARA AGREGAR ESTUDIANTE ---
     if (showAddStudentDialog && curso != null) {
         AlertDialog(
             onDismissRequest = { showAddStudentDialog = false },
@@ -274,62 +213,33 @@ fun PantallaDetalleCurso(
                     OutlinedTextField(
                         value = addStudentSearchText,
                         onValueChange = { addStudentSearchText = it },
-                        label = { Text("Buscar estudiante disponible") },
-                        leadingIcon = { Icon(Icons.Filled.Search, contentDescription = "Buscar") },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 8.dp)
+                        label = { Text("Buscar estudiante") },
+                        leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+                        modifier = Modifier.fillMaxWidth()
                     )
-
                     Spacer(modifier = Modifier.height(8.dp))
-
-                    if (filteredAvailableStudents.isEmpty() && addStudentSearchText.isNotBlank()) {
-                        Text("No se encontraron estudiantes con ese nombre o ya están en el curso.", style = MaterialTheme.typography.bodySmall)
-                    } else if (filteredAvailableStudents.isEmpty() && addStudentSearchText.isBlank()) {
-                        Text("Empieza a escribir para buscar estudiantes.", style = MaterialTheme.typography.bodySmall)
-                    } else {
-                        LazyColumn(modifier = Modifier.heightIn(max = 200.dp)) {
-                            items(filteredAvailableStudents) { estudiante -> // 'estudiante' es un objeto Estudiante completo
-                                Card(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 4.dp)
-                                        .clickable {
-                                            // *** AQUÍ PASAS estudiante.id al ViewModel para añadirlo al curso ***
-                                            cursoViewModel.agregarEstudianteACurso(idCurso, estudiante.id) { success ->
-                                                if (success) {
-                                                    Toast.makeText(context, "Estudiante '${estudiante.nombre}' agregado.", Toast.LENGTH_SHORT).show()
-                                                    // Después de agregar, recargar los estudiantes disponibles para el diálogo
-                                                    // para que el estudiante recién añadido no aparezca más.
-                                                    vinculacionViewModel.obtenerEstudiantes()
-                                                } else {
-                                                    Toast.makeText(context, "Error al agregar estudiante.", Toast.LENGTH_SHORT).show()
-                                                }
-                                                showAddStudentDialog = false
-                                                addStudentSearchText = ""
-                                            }
-                                        }
-                                ) {
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(16.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(
-                                            text = "${estudiante.nombre} (ID: ${estudiante.id})", // Muestras nombre e ID
-                                            style = MaterialTheme.typography.titleMedium,
-                                            modifier = Modifier.weight(1f)
-                                        )
-                                        Icon(Icons.Filled.Add, contentDescription = "Seleccionar", tint = MaterialTheme.colorScheme.primary)
+                    LazyColumn(modifier = Modifier.heightIn(max = 200.dp)) {
+                        items(filteredAvailableStudents) { estudiante ->
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        cursoViewModel.agregarEstudianteACurso(idCurso, estudiante.id) {}
+                                        showAddStudentDialog = false
                                     }
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text("${estudiante.nombre} (ID: ${estudiante.id})", modifier = Modifier.weight(1f))
+                                    Icon(Icons.Filled.Add, contentDescription = null)
                                 }
                             }
                         }
                     }
                 }
             },
-            confirmButton = { /* El botón de confirmación puede ser innecesario si se agrega al hacer clic en el estudiante */ },
             dismissButton = {
                 Button(onClick = {
                     showAddStudentDialog = false
@@ -337,7 +247,8 @@ fun PantallaDetalleCurso(
                 }) {
                     Text("Cancelar")
                 }
-            }
+            },
+            confirmButton = {}
         )
     }
 }

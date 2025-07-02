@@ -14,6 +14,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.proyectogrado.viewmodel.PerfilUsuarioViewModel
+import androidx.compose.ui.unit.sp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,55 +43,55 @@ fun PantallaPerfilUsuario(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0D47A1)) // Azul institucional
-            .padding(16.dp)
+            .background(Color(0xFF102027)) // Azul oscuro/Gris azulado
+            .padding(20.dp)
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-
-            // Avatar de perfil
             Icon(
                 imageVector = Icons.Default.AccountCircle,
                 contentDescription = "Avatar de perfil",
-                tint = Color.White,
+                tint = Color(0xFF90CAF9),
                 modifier = Modifier
-                    .size(96.dp)
+                    .size(100.dp)
                     .align(Alignment.CenterHorizontally)
             )
 
             Text(
                 text = "👤 Mi Perfil",
                 color = Color.White,
-                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                fontSize = 26.sp,
+                fontWeight = FontWeight.Bold,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
 
             Card(
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF37474F))
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("📛 Nombre: $nombre")
-                    Text("📧 Correo: $correo")
-                    Text("🆔 Usuario: $usuario")
-                    Text("📄 Documento: $documento")
-                    Text("🎂 Nacimiento: $fechaNacimiento")
-                    Text("🎓 Rol: $rol")
+                    Text("📛 Nombre: $nombre", color = Color.White)
+                    Text("📧 Correo: $correo", color = Color.White)
+                    Text("🆔 Usuario: $usuario", color = Color.White)
+                    Text("📄 Documento: $documento", color = Color.White)
+                    Text("🎂 Nacimiento: $fechaNacimiento", color = Color.White)
+                    Text("🎓 Rol: $rol", color = Color.White)
                 }
             }
 
             Text(
-                text = "✏️ Editar información",
+                text = "✏️ Editar Información",
                 color = Color.White,
-                style = MaterialTheme.typography.titleLarge
+                fontSize = 20.sp,
+                fontWeight = FontWeight.SemiBold
             )
 
             Card(
                 shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)), // gris claro
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFCFD8DC)),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
@@ -131,9 +132,9 @@ fun PantallaPerfilUsuario(
                     )
                 },
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = Color.White)
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF29B6F6))
             ) {
-                Text("Guardar Cambios", color = Color(0xFF0D47A1), fontWeight = FontWeight.Bold)
+                Text("💾 Guardar Cambios", color = Color.White, fontWeight = FontWeight.Bold)
             }
 
             if (mensaje.isNotBlank()) {
@@ -149,9 +150,9 @@ fun PantallaPerfilUsuario(
             Button(
                 onClick = onBack,
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = Color.White)
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF546E7A))
             ) {
-                Text("Volver", color = Color(0xFF0D47A1), fontWeight = FontWeight.Bold)
+                Text("🔙 Volver", color = Color.White, fontWeight = FontWeight.Bold)
             }
         }
     }
