@@ -18,7 +18,8 @@ fun PantallaPadreMenu(
     onVincular: () -> Unit,
     onMonitorear: () -> Unit,
     onConfigurarHorarioEstudiante: () -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    onVerGraficaUso: () -> Unit, // NUEVO callback para botón de gráfica
 ) {
     Column(
         modifier = Modifier
@@ -69,6 +70,19 @@ fun PantallaPadreMenu(
         }
 
         Spacer(modifier = Modifier.height(16.dp))
+
+        // 🔵 NUEVO BOTÓN: Ver gráfica de uso de apps
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(
+            onClick = onVerGraficaUso,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp)
+        ) {
+            Text("Ver gráfica de uso de apps")
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
 
         Button(
             onClick = { navController.navigate(Screen.PerfilUsuario.route) },
